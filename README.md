@@ -4,7 +4,7 @@ The web shop for the **[ShopFlow microservices](https://github.com/niravparmar19
 
 **Stack:** React 19 · TypeScript (strict) · Vite 8 · Module Federation 2 (`@module-federation/vite`) · React Router 7 · TanStack Query 5 · Tailwind CSS 4 · Vitest · Playwright
 
-> **Status:** F0–F7 done: sign up → browse → cart → place order → pay → track, plus a polish pass. Next: F8 (deploy on Stage 1).
+> **Status:** F0–F8 done. **Live on AWS** (Stage 1): https://shopflow-nirav.duckdns.org (when the Stage 1 box is running). Sign up → browse → cart → place order → pay → track.
 
 ```mermaid
 flowchart LR
@@ -233,7 +233,7 @@ CI (`.github/workflows/ci.yml`) runs on every PR: typecheck, lint, unit tests, b
 - [x] **F5** Pay: fake provider (dev), Razorpay adapter, wait for the payment row
 - [x] **F6** My orders + live tracking timeline
 - [x] **F7** Polish: active nav link, "Page not found" inside remotes, error reference in toasts, pay and mobile orders layout
-- [ ] **F8** Deploy on Stage 1: Docker (nginx), Caddy route, ECR, release + deploy workflows (code ready; goes live after `terraform apply` and the merges)
+- [x] **F8** Deploy on Stage 1: Docker (nginx), Caddy route, ECR (Terraform), release (Trivy) + deploy workflows, rollback
 
 ## License
 
