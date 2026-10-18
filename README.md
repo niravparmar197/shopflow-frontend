@@ -93,6 +93,16 @@ Gateway on another URL:
 $env:SHOPFLOW_API="http://localhost:3000"; npm run dev
 ```
 
+## Start and stop (one command)
+
+| Where | Start | Stop | Check |
+|---|---|---|---|
+| **Your computer** | `.\scripts\dev.ps1 start` | `.\scripts\dev.ps1 stop` | `.\scripts\dev.ps1 status` |
+| **Live (AWS Stage 1)** | `.\scripts\live.ps1 start` | `.\scripts\live.ps1 stop` | `.\scripts\live.ps1 status` |
+
+- **`dev.ps1`** runs `npm run dev` in its own window ("shopflow web"), waits until http://localhost:5000 answers, and warns if the backend (`:3000`) is not running. Backend + web together: `..\shopflow\scripts\start-all.ps1 -Web ..\shopflow-frontend` (and `stop-all.ps1`).
+- **`live.ps1`** starts or stops the Stage 1 EC2 box (it runs the backend **and** this web app), then waits until both the shop and the API answer (~3-6 min). `stop` keeps data, certificates and the domain; only compute stops. `live.ps1 open` opens the shop. Needs the AWS CLI profile `shopflow`.
+
 ## Scripts
 
 | Command | What it does |
@@ -166,7 +176,7 @@ shopflow-frontend/
 │   └── shared/      # events.ts, hooks.ts, routes.ts
 ├── e2e/             # Playwright tests (mocked gateway)
 ├── nginx/           # default.conf (cache rules, SPA fallback), security headers
-├── scripts/         # assemble, serve, size budget, CSS prefix check
+├── scripts/         # dev.ps1 + live.ps1 (start/stop), assemble, serve, size budget, CSS prefix check
 ├── federation.config.ts   # shared singletons + dev ports
 ├── Dockerfile             # node build → nginx (non-root)
 └── .github/workflows/     # ci.yml, release.yml (image → ECR), deploy-stage1.yml
