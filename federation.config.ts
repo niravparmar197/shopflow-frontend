@@ -17,9 +17,9 @@ export const shared = {
 };
 
 /** Dev ports. In production everything is one origin: /, /mfe/<name>/, /v1. */
-export const ports = { shell: 5000, catalog: 5001, cart: 5002, checkout: 5003 } as const;
+export const ports = { shell: 5000, catalog: 5001, cart: 5002, checkout: 5003, admin: 5004 } as const;
 
-export const remoteNames: Array<Exclude<keyof typeof ports, 'shell'>> = ['catalog', 'cart', 'checkout'];
+export const remoteNames: Array<Exclude<keyof typeof ports, 'shell'>> = ['catalog', 'cart', 'checkout', 'admin'];
 
 /** Where the gateway runs in dev (the ShopFlow backend: npm run start:dev). */
 export const apiTarget = process.env.SHOPFLOW_API ?? 'http://localhost:3000';

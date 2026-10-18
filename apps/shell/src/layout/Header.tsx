@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router';
-import { ChevronDown, LogOut, Receipt, Search, ShoppingBag, User } from 'lucide-react';
+import { ChevronDown, LayoutDashboard, LogOut, Receipt, Search, ShoppingBag, User } from 'lucide-react';
 import { logout } from '@shopflow/api';
 import { routes, toast, useSession } from '@shopflow/shared';
 import { Button, cx } from '@shopflow/ui';
@@ -140,12 +140,33 @@ function UserMenu() {
           <Link to={routes.orders} onClick={() => setOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-sm text-ink-soft hover:bg-canvas">
             <Receipt className="size-4" aria-hidden /> My orders
           </Link>
+          {user.role === 'admin' && (
+            <Link to={routes.admin} onClick={() => setOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-sm text-ink-soft hover:bg-canvas">
+              <LayoutDashboard className="size-4" aria-hidden /> Admin panel
+            </Link>
+          )}
           <button type="button" onClick={onLogout} className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-2 text-sm text-danger hover:bg-danger-soft">
             <LogOut className="size-4" aria-hidden /> Log out
           </button>
         </div>
       )}
     </div>
+  );
+}
+
+/** "Admin" in the top bar, for admins only (the admin pages check again). */
+function AdminLink() {
+  const { user } = useSession();
+  if (user?.role !== 'admin') return null;
+  return (
+    <NavLink
+      to={routes.admin}
+      className={({ isActive }) =>
+        cx('hidden rounded-lg px-3 py-2 text-sm font-semibold hover:bg-primary-soft hover:text-ink sm:block', isActive ? 'bg-primary-soft text-primary' : 'text-ink-soft')
+      }
+    >
+      Admin
+    </NavLink>
   );
 }
 
@@ -164,6 +185,7 @@ export function Header() {
           >
             Orders
           </NavLink>
+          <AdminLink />
           <CartButton />
           <UserMenu />
         </nav>

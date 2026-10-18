@@ -1,5 +1,6 @@
 {
   "catalog": "/mfe/catalog/remoteEntry.js",
   "cart": "/mfe/cart/remoteEntry.js",
-  "checkout": "/mfe/checkout/remoteEntry.js"
+  "checkout": "/mfe/checkout/remoteEntry.js",
+  "admin": "/mfe/admin/remoteEntry.js"
 }

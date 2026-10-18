@@ -11,4 +11,12 @@ export const routes = {
   login: (returnTo?: string) =>
     returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login',
   signup: '/signup',
+  // Admin micro frontend (admin role only)
+  admin: '/admin',
+  adminProducts: '/admin/products',
+  adminNewProduct: '/admin/products/new',
+  adminProduct: (id: string) => `/admin/products/${encodeURIComponent(id)}`,
+  adminCoupons: '/admin/coupons',
+  adminOrders: '/admin/orders',
+  adminOrder: (id: string) => `/admin/orders/${encodeURIComponent(id)}`,
 } as const;

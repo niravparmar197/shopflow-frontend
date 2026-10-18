@@ -163,3 +163,85 @@ export interface Payment {
   lastError: string | null;
   expiresAt: string;
 }
+
+/* ---------- Admin (admin role only) ---------- */
+
+/** One row of GET /v1/admin/orders: every customer's orders. */
+export interface AdminOrderSummary {
+  id: string;
+  userId: string;
+  customerEmail: string | null;
+  status: OrderStatus;
+  paymentStatus: string | null;
+  title: string | null;
+  itemCount: number | null;
+  totalPaise: number;
+  currency: string;
+  createdAt: string;
+}
+
+/** GET /v1/admin/orders/:id: the order plus who placed it. */
+export interface AdminOrder extends Order {
+  userId: string;
+  customerEmail: string | null;
+  updatedAt: string;
+}
+
+/** Fields of a product the admin can set. */
+export interface ProductInput {
+  name: string;
+  slug: string;
+  description?: string;
+  category: string;
+  pricePaise: number;
+  attributes?: Record<string, unknown>;
+}
+
+export interface Stock {
+  productId: string;
+  available: number;
+  reserved: number;
+}
+
+export type FlashSaleStatus =
+  | { productId: string; active: false }
+  | { productId: string; active: true; left: number; total: number; maxPerUser: number; buyers: number; endsInSec: number };
+
+export type CouponType = 'PERCENT' | 'FLAT';
+
+export interface Coupon {
+  id: string;
+  code: string;
+  type: CouponType;
+  value: number; // percent, or paise for FLAT
+  maxDiscountPaise: number | null;
+  minCartPaise: number;
+  category: string | null;
+  firstOrderOnly: boolean;
+  validFrom: string;
+  validTo: string;
+  usageLimit: number | null;
+  usedCount: number;
+  isActive: boolean;
+}
+
+export interface CouponInput {
+  code: string;
+  type: CouponType;
+  value: number;
+  maxDiscountPaise?: number;
+  minCartPaise?: number;
+  category?: string;
+  firstOrderOnly?: boolean;
+  validFrom: string;
+  validTo: string;
+  usageLimit?: number;
+}
+
+/** A presigned POST: send the file to `url` as multipart form data with `fields` first. */
+export interface ImageUploadTarget {
+  url: string;
+  fields: Record<string, string>;
+  key: string;
+  expiresIn: number;
+}

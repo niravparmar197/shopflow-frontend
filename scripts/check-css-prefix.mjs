@@ -1,11 +1,11 @@
-// Every class in a remote must carry that remote's Tailwind prefix (cat:, cart:,
+// Every class in a remote must carry that remote's Tailwind prefix (cat:, cart:, adm:,
 // chk:), or it may clash with the shell's CSS. This catches a forgotten prefix
 // in className="..." strings and simple template literals.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
-const prefixes = { catalog: 'cat', cart: 'cart', checkout: 'chk' };
+const prefixes = { catalog: 'cat', cart: 'cart', checkout: 'chk', admin: 'adm' };
 let problems = 0;
 
 const walk = (dir) =>

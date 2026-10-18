@@ -1,10 +1,10 @@
 # ShopFlow Web
 
-The web shop for the **[ShopFlow microservices](https://github.com/niravparmar197/shopflow)**, built as **micro frontends**: a shell and 3 remotes (catalog, cart, checkout), joined **at runtime** with Module Federation. Each remote owns one business area, like the backend services.
+The web shop for the **[ShopFlow microservices](https://github.com/niravparmar197/shopflow)**, built as **micro frontends**: a shell and 4 remotes (catalog, cart, checkout, admin), joined **at runtime** with Module Federation. Each remote owns one business area, like the backend services.
 
 **Stack:** React 19 · TypeScript (strict) · Vite 8 · Module Federation 2 (`@module-federation/vite`) · React Router 7 · TanStack Query 5 · Tailwind CSS 4 · Vitest · Playwright
 
-> **Status:** F0–F8 done. **Live on AWS** (Stage 1): https://shopflow-nirav.duckdns.org (when the Stage 1 box is running). Sign up → browse → cart → place order → pay → track.
+> **Status:** F0–F8 done; Phase 2 P1 (admin panel) built. **Live on AWS** (Stage 1): https://shopflow-nirav.duckdns.org (when the Stage 1 box is running). Sign up → browse → cart → place order → pay → track.
 
 ```mermaid
 flowchart LR
@@ -13,8 +13,9 @@ flowchart LR
   E -->|/mfe/catalog| C[catalog remote]
   E -->|/mfe/cart| CA[cart remote]
   E -->|/mfe/checkout| CH[checkout remote]
+  E -->|/mfe/admin| AD[admin remote<br/>admins only]
   E -->|/v1/*| G[ShopFlow gateway]
-  S -. loads at runtime .-> C & CA & CH
+  S -. loads at runtime .-> C & CA & CH & AD
   G --> P[product] & O[order] & PAY[payment] & U[user]
 ```
 
@@ -38,6 +39,7 @@ flowchart LR
 | `apps/catalog` | remote | Home, product list, product detail, "Add to cart" | 5001 |
 | `apps/cart` | remote | Cart page + `CartBadge` widget (shown in the shell header) | 5002 |
 | `apps/checkout` | remote | Checkout, payment, my orders, order tracking | 5003 |
+| `apps/admin` | remote | Admin panel (admin role only): products + images, stock, flash sales, coupons, all orders | 5004 |
 | `packages/api` | library | Typed gateway client: token in memory, refresh single flight, `ApiError` | — |
 | `packages/ui` | library | Design system: tokens (`theme.css`), Button, Input, Card, Price, StatusPill… | — |
 | `packages/shared` | library | Events between apps, `useSession`, routes | — |
@@ -83,7 +85,7 @@ Needs Node **22.12+**.
 
 ```powershell
 npm install
-npm run dev        # starts all 4 apps → open http://localhost:5000
+npm run dev        # starts all 5 apps → open http://localhost:5000
 ```
 
 The shell's dev server sends `/v1/*` to the gateway, so the browser sees one origin.
@@ -107,8 +109,8 @@ $env:SHOPFLOW_API="http://localhost:3000"; npm run dev
 
 | Command | What it does |
 |---|---|
-| `npm run dev` | Starts the 4 apps (ports 5000–5003) |
-| `npm run build` | Builds the 4 apps, then assembles `dist-web/` in the production layout |
+| `npm run dev` | Starts the 5 apps (ports 5000–5004) |
+| `npm run build` | Builds the 5 apps, then assembles `dist-web/` in the production layout |
 | `npm start` | Serves `dist-web/` on http://localhost:8080 like production (proxies `/v1`) |
 | `npm run typecheck` | TypeScript strict, every app and package |
 | `npm run lint` | ESLint + the CSS prefix check |
@@ -121,7 +123,7 @@ $env:SHOPFLOW_API="http://localhost:3000"; npm run dev
 **1. Runtime remotes.** The shell has no remote URLs at build time. At startup it reads `/mfe-manifest.json`:
 
 ```json
-{ "catalog": "/mfe/catalog/remoteEntry.js", "cart": "/mfe/cart/remoteEntry.js", "checkout": "/mfe/checkout/remoteEntry.js" }
+{ "catalog": "/mfe/catalog/remoteEntry.js", "cart": "/mfe/cart/remoteEntry.js", "checkout": "/mfe/checkout/remoteEntry.js", "admin": "/mfe/admin/remoteEntry.js" }
 ```
 
 It then registers the remotes with the Module Federation runtime (`apps/shell/src/federation/remotes.ts`). To release one remote, deploy it and change its line in the manifest. To roll back, change the line back. The shell is not rebuilt.
@@ -158,6 +160,10 @@ On a 401, the client refreshes once (single flight: 10 parallel 401s → 1 refre
 | `/orders/:id/pay` | checkout | `POST /v1/payments/:id/checkout`, `GET /v1/payments/:id`, dev: `POST /v1/payments/dev/fake-pay/:id` |
 | `/orders` | checkout | `GET /v1/orders?cursor&limit` |
 | `/orders/:id` | checkout | `GET /v1/orders/:id/tracking`, `GET /v1/orders/:id` |
+| `/admin/products` | admin | `GET /v1/products`, `GET /v1/inventory/stock/:id` (per row) |
+| `/admin/products/new`, `/admin/products/:id` | admin | `POST /v1/products`, `PATCH /v1/products/:id` (with `version`), images: `POST …/images/upload-url` → upload to storage → `POST …/images/confirm`, `PUT /v1/inventory/stock/:id`, `GET/POST/DELETE /v1/inventory/flash-sales` |
+| `/admin/orders`, `/admin/orders/:id` | admin | `GET /v1/admin/orders?status&cursor`, `GET /v1/admin/orders/:id` |
+| `/admin/coupons` | admin | `GET /v1/coupons`, `POST /v1/coupons` |
 
 All money is in **paise** (integers) and is formatted only at display time (`formatPaise`: 2499900 → ₹24,999).
 
@@ -169,7 +175,8 @@ shopflow-frontend/
 │   ├── shell/       # host: src/App.tsx (routes), federation/, layout/, pages/
 │   ├── catalog/     # remote: pages/, components/, filters.ts, useAddToCart.ts
 │   ├── cart/        # remote: CartPage.tsx, CartBadge.tsx, useCart.ts
-│   └── checkout/    # remote: CheckoutPage, PaymentPage, OrdersPage, OrderTrackingPage
+│   ├── checkout/    # remote: CheckoutPage, PaymentPage, OrdersPage, OrderTrackingPage
+│   └── admin/       # remote: products/, orders/, coupons/ (admin role only)
 ├── packages/
 │   ├── api/         # client.ts, auth.ts, endpoints.ts, types.ts, errors.ts
 │   ├── ui/          # theme.css, components.tsx, format.ts
@@ -190,7 +197,7 @@ shopflow-frontend/
 | Pay fails with "FAKE_WEBHOOK_SECRET is not set" | Set it in the backend's `apps/payment/.env` and restart the payment service. |
 | Logged out after every reload | The web app and `/v1` are not on one origin. Open the app on http://localhost:5000, not on a remote's port. |
 | "Too many requests" | The gateway allows 100 requests/min per IP and 5 logins/min. Wait a minute, or raise `RATE_LIMIT_GLOBAL_PER_MIN` in the gateway's `.env` for local work. |
-| A part of the page says "not available right now" | That remote's dev server is not running. `npm run dev` starts all 4. |
+| A part of the page says "not available right now" | That remote's dev server is not running. `npm run dev` starts all 5. |
 | `Port 5000 is in use` | Close the other app on that port; the dev ports are set in `federation.config.ts`. |
 
 ## Build and deploy
@@ -200,7 +207,7 @@ shopflow-frontend/
 ```
 dist-web/
 ├── index.html, assets/, mfe-manifest.json   # shell
-└── mfe/catalog/, mfe/cart/, mfe/checkout/   # remotes (remoteEntry.js + assets/)
+└── mfe/catalog/, mfe/cart/, mfe/checkout/, mfe/admin/   # remotes (remoteEntry.js + assets/)
 ```
 
 Cache rules (the same in `scripts/serve.mjs` and `nginx/default.conf`):
@@ -244,6 +251,18 @@ CI (`.github/workflows/ci.yml`) runs on every PR: typecheck, lint, unit tests, b
 - [x] **F6** My orders + live tracking timeline
 - [x] **F7** Polish: active nav link, "Page not found" inside remotes, error reference in toasts, pay and mobile orders layout
 - [x] **F8** Deploy on Stage 1: Docker (nginx), Caddy route, ECR (Terraform), release (Trivy) + deploy workflows, rollback
+
+### Phase 2 (after F8)
+
+- [x] **P1** Admin panel: the `admin` remote at `/admin/*` (admin role only; customers see "No access"): products with live stock, create / edit (optimistic `version`), image upload, stock, flash sales, coupons, all orders with a status filter
+- [ ] **P2** Checkout complete: shipping address, cancel + refund, ship / deliver
+- [ ] **P3** Account: reset password, verify email, profile
+- [ ] **P4** Email and legal: SES emails, legal pages, invoice PDF
+- [ ] **P5** Shop polish: images in the shop, categories API, sorting, flash sale page, wishlist, reviews
+
+Skipped on purpose: real payments (the fake provider stays) and production extras (backups, custom domain, SEO, uptime).
+
+**Admin panel:** make your user an admin (backend: `UPDATE users SET role='admin' …`, or `seed-live.ps1` on Stage 1), log in again, then use **Admin** in the header. Image upload sends the file straight to storage with a presigned form: it works locally (MinIO) and on Stage 2 (S3); on Stage 1 the storage is private to the box, so uploads fail there.
 
 ## License
 
