@@ -1,0 +1,70 @@
+name: release-image
+
+# After a merge to main: build the web image → scan with Trivy → push to ECR as
+# shopflow/web:<git-sha>. Same pattern as the backend's release-images workflow.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false # never cancel a half-pushed release
+
+jobs:
+  image:
+    runs-on: ubuntu-24.04
+    env:
+      IMAGE: ${{ vars.ECR_REGISTRY }}/shopflow/web:${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # The backend's least-privilege CI user (shopflow-ci): push to OUR ECR repos only.
+      - name: AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # Tags are IMMUTABLE: a re-run must skip instead of failing on push.
+      - name: Skip if this SHA is already in ECR
+        id: exists
+        run: |
+          if aws ecr describe-images --repository-name shopflow/web \
+               --image-ids imageTag=${{ github.sha }} >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Already in ECR, skipping."
+          fi
+
+      - uses: aws-actions/amazon-ecr-login@v2
+        if: steps.exists.outputs.skip != 'true'
+
+      - uses: docker/setup-buildx-action@v3
+        if: steps.exists.outputs.skip != 'true'
+
+      - name: Build (load locally so we can scan before pushing)
+        if: steps.exists.outputs.skip != 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          tags: ${{ env.IMAGE }}
+          load: true
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+
+      - name: Trivy image scan (fail on fixable CRITICAL/HIGH)
+        if: steps.exists.outputs.skip != 'true'
+        uses: aquasecurity/trivy-action@v0.36.0 # pinned: old bare tags were hijacked (GHSA-69fq-xp46-6x23)
+        with:
+          image-ref: ${{ env.IMAGE }}
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Push
+        if: steps.exists.outputs.skip != 'true'
+        run: docker push "$IMAGE"

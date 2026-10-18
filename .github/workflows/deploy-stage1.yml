@@ -1,0 +1,116 @@
+name: deploy-stage1
+
+# After release-image pushed shopflow/web:<sha>, put that web image live on the
+# Stage 1 box. Only the `web` container changes; the backend is not touched.
+# Manual run (also = rollback): Actions -> deploy-stage1 -> Run workflow, with
+# any web tag already in ECR.
+on:
+  workflow_run:
+    workflows: [release-image]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Web image tag (full git SHA of this repo) to deploy"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-stage1-web
+  cancel-in-progress: false # never stop a deploy half-way
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: stage1
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.event.workflow_run.head_sha }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      INSTANCE_ID: ${{ vars.STAGE1_INSTANCE_ID }}
+      DOMAIN: ${{ vars.STAGE1_DOMAIN }}
+      TAG_PARAM: /shopflow/prod/WEB_IMAGE_TAG # Terraform: infra/terraform/stage1/web.tf (backend repo)
+    steps:
+      - name: AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Check settings and the image
+        run: |
+          for v in AWS_REGION INSTANCE_ID DOMAIN TAG; do
+            [ -n "${!v}" ] || { echo "::error::$v is empty (GitHub repo variables)"; exit 1; }
+          done
+          aws ecr describe-images --repository-name shopflow/web --image-ids imageTag="$TAG" >/dev/null \
+            || { echo "::error::shopflow/web:$TAG is not in ECR"; exit 1; }
+          echo "Deploying web $TAG to $INSTANCE_ID ($DOMAIN)"
+
+      # Record the tag FIRST: a backend deploy that starts meanwhile then keeps the
+      # new web tag. Put back below if the box could not make it healthy.
+      - name: Record the web tag in SSM
+        id: record
+        run: |
+          PREV=$(aws ssm get-parameter --name "$TAG_PARAM" --query Parameter.Value --output text)
+          echo "prev=$PREV" >> "$GITHUB_OUTPUT"
+          aws ssm put-parameter --name "$TAG_PARAM" --value "$TAG" --type String --overwrite >/dev/null
+          echo "SSM $TAG_PARAM: $PREV -> $TAG"
+
+      # No SSH: SSM Run Command runs deploy-web.sh (shipped in the backend's bundle) as root.
+      - name: Run deploy-web.sh on the box (SSM)
+        run: |
+          set -euo pipefail
+          SCRIPT=$(cat <<SH
+          set -e
+          REL=/opt/shopflow/releases/\$(cat /opt/shopflow/current)
+          test -f \$REL/deploy-web.sh || { echo "live backend release has no deploy-web.sh: deploy the backend first"; exit 1; }
+          bash \$REL/deploy-web.sh $TAG
+          SH
+          )
+          PARAMS=$(jq -n --arg s "$SCRIPT" '{commands: ($s | split("\n") | map(select(length > 0))), executionTimeout: ["600"]}')
+          CMD_ID=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --comment "deploy web $TAG" \
+            --timeout-seconds 120 \
+            --parameters "$PARAMS" \
+            --query Command.CommandId --output text)
+          echo "SSM command: $CMD_ID"
+
+          for i in $(seq 1 60); do
+            sleep 10
+            STATUS=$(aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" \
+              --query Status --output text 2>/dev/null || echo Pending)
+            echo "[$i] $STATUS"
+            case "$STATUS" in Pending|InProgress|Delayed) continue ;; *) break ;; esac
+          done
+
+          echo "::group::deploy-web.sh output"
+          aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" \
+            --query StandardOutputContent --output text
+          echo "::endgroup::"
+          [ "$STATUS" = "Success" ] || { echo "::error::web deploy $STATUS (the box rolled back if it could)"; exit 1; }
+
+      - name: Put the old tag back (deploy failed)
+        if: failure() && steps.record.outputs.prev != ''
+        run: |
+          aws ssm put-parameter --name "$TAG_PARAM" --value "${{ steps.record.outputs.prev }}" --type String --overwrite >/dev/null
+          echo "SSM $TAG_PARAM back to ${{ steps.record.outputs.prev }}"
+
+      # Same check a user would do: real DNS, real certificate, from outside AWS.
+      - name: Smoke test from the internet
+        run: |
+          for i in $(seq 1 12); do
+            if curl -fsS --max-time 10 "https://$DOMAIN/mfe-manifest.json" \
+              && curl -fsS --max-time 10 -o /dev/null "https://$DOMAIN/" \
+              && curl -fsS --max-time 10 -o /dev/null "https://$DOMAIN/health/ready"; then
+              echo; echo "LIVE: https://$DOMAIN"; exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::https://$DOMAIN did not answer"; exit 1

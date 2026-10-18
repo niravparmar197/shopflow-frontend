@@ -165,9 +165,11 @@ shopflow-frontend/
 │   ├── ui/          # theme.css, components.tsx, format.ts
 │   └── shared/      # events.ts, hooks.ts, routes.ts
 ├── e2e/             # Playwright tests (mocked gateway)
+├── nginx/           # default.conf (cache rules, SPA fallback), security headers
 ├── scripts/         # assemble, serve, size budget, CSS prefix check
 ├── federation.config.ts   # shared singletons + dev ports
-└── .github/workflows/ci.yml
+├── Dockerfile             # node build → nginx (non-root)
+└── .github/workflows/     # ci.yml, release.yml (image → ECR), deploy-stage1.yml
 ```
 
 ## Troubleshooting
@@ -191,9 +193,33 @@ dist-web/
 └── mfe/catalog/, mfe/cart/, mfe/checkout/   # remotes (remoteEntry.js + assets/)
 ```
 
-Cache rules (in `scripts/serve.mjs`; nginx later):
+Cache rules (the same in `scripts/serve.mjs` and `nginx/default.conf`):
 - **Hashed files** (`assets/*`) are cached for 1 year (`immutable`).
 - **`index.html`, `remoteEntry.js` and the manifests** are `no-cache`, so a browser never mixes an old entry with new chunks.
+- **App routes** (`/orders/123`) get `index.html`; a **missing file** is a real 404 (never cached).
+
+### Docker image
+
+```powershell
+docker build -t shopflow-web .
+docker run --rm -p 8080:8080 shopflow-web     # → http://localhost:8080 (UI only, no /v1 proxy)
+```
+Node 22 builds `dist-web/`, then **nginx** (non-root, port 8080, `/healthz`) serves it. There is no `/v1` proxy in the image: on Stage 1, Caddy sends `/v1` to the gateway.
+
+### Deploy on Stage 1 (AWS)
+
+```
+merge to main
+  └─ release-image   build → Trivy (fixable CRITICAL/HIGH fail) → ECR shopflow/web:<git sha>
+       └─ deploy-stage1   SSM WEB_IMAGE_TAG = <sha> → SSM Run Command → deploy-web.sh on the box
+                          → only the web container changes → health check → rollback on failure
+```
+
+Live: **https://shopflow-nirav.duckdns.org** (when the Stage 1 box is running). Caddy sends `/v1`, `/health` and `/docs` to the gateway and everything else to this app: one origin, so the login cookie works.
+
+- **Roll back:** Actions → `deploy-stage1` → Run workflow with an older tag (`gh workflow run deploy-stage1 -f tag=<sha>`).
+- **GitHub settings** (same values as the backend repo): secrets `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`; variables `AWS_REGION`, `ECR_REGISTRY`, `STAGE1_INSTANCE_ID`, `STAGE1_DOMAIN`; an environment `stage1`.
+- **AWS side** (backend repo, Terraform): the ECR repo, the SSM parameter and the box setup. See the backend's [Stage 1 docs](https://github.com/niravparmar197/shopflow/blob/main/docs/deploy-stage1.md#web-app-adr-0007) and ADR 0007.
 
 CI (`.github/workflows/ci.yml`) runs on every PR: typecheck, lint, unit tests, build, bundle size budget, Playwright e2e and `npm audit`.
 
@@ -207,7 +233,7 @@ CI (`.github/workflows/ci.yml`) runs on every PR: typecheck, lint, unit tests, b
 - [x] **F5** Pay: fake provider (dev), Razorpay adapter, wait for the payment row
 - [x] **F6** My orders + live tracking timeline
 - [x] **F7** Polish: active nav link, "Page not found" inside remotes, error reference in toasts, pay and mobile orders layout
-- [ ] **F8** Deploy on Stage 1: Docker (nginx), Caddy route, ECR, release workflow
+- [ ] **F8** Deploy on Stage 1: Docker (nginx), Caddy route, ECR, release + deploy workflows (code ready; goes live after `terraform apply` and the merges)
 
 ## License
 
