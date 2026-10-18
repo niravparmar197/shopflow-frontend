@@ -44,13 +44,41 @@ flowchart LR
 
 ## Getting started
 
-### 1. Run the backend first
+### Start everything (every day)
+
+The backend repo has one script that starts the whole stack: Docker infrastructure, the 7 services and this web app, each in its own window. Both repos are side by side in `F:\projects`.
+
+```powershell
+cd F:\projects\shopflow
+.\scripts\start-all.ps1 -Web ..\shopflow-frontend
+```
+
+Wait about 30–60 s, then open **http://localhost:5000**.
+
+| What | URL |
+|---|---|
+| Web app (shell) | http://localhost:5000 |
+| Remotes (dev servers) | :5001 catalog · :5002 cart · :5003 checkout |
+| Gateway / API docs | http://localhost:3000 · http://localhost:3000/docs |
+
+Stop everything (data is kept):
+
+```powershell
+cd F:\projects\shopflow
+.\scripts\stop-all.ps1
+```
+
+Only the web app (when the backend is already running): `npm run dev` in this folder.
+
+The first time, do the one-time setup below instead.
+
+### 1. Run the backend first (one-time setup)
 Follow **[Run the whole stack locally](https://github.com/niravparmar197/shopflow#run-the-whole-stack-locally-powershell)** in the backend README. You need:
 - the gateway on **http://localhost:3000**;
 - `FAKE_WEBHOOK_SECRET` set in the payment service's `.env`;
 - products seeded **and given stock** (`npm run seed:product`, then `.\scripts\seed-stock.ps1`). Without stock, every order is cancelled as `OUT_OF_STOCK`.
 
-### 2. Run the web app
+### 2. Run the web app (one-time setup)
 Needs Node **22.12+**.
 
 ```powershell
