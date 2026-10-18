@@ -1,4 +1,4 @@
-// Serves dist-web like production does (same rules as nginx.conf), and proxies
+// Serves dist-web like production does (same rules as nginx/default.conf), and proxies
 // /v1 to the gateway. For local checks and the e2e tests:
 //   npm run build && npm start          → http://localhost:8080
 //   SHOPFLOW_API=http://localhost:3000 PORT=8080
