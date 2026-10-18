@@ -1,0 +1,43 @@
+{
+  "name": "shopflow-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ShopFlow web: micro frontends (React + Vite + Module Federation) for the ShopFlow microservices",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n shell,catalog,cart,checkout -c blue,green,magenta,yellow \"npm:dev -w @shopflow/shell\" \"npm:dev -w @shopflow/catalog\" \"npm:dev -w @shopflow/cart\" \"npm:dev -w @shopflow/checkout\"",
+    "build": "npm run build -w @shopflow/catalog -w @shopflow/cart -w @shopflow/checkout -w @shopflow/shell && node scripts/assemble.mjs",
+    "start": "node scripts/serve.mjs",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "eslint . && node scripts/check-css-prefix.mjs",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "1.56.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@types/node": "^22.19.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "concurrently": "^9.2.1",
+    "eslint": "^10.13.0",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^16.5.0",
+    "jsdom": "^27.4.0",
+    "prettier": "^3.6.2",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.0",
+    "vitest": "^5.0.5",
+    "vite": "^8.3.4"
+  }
+}

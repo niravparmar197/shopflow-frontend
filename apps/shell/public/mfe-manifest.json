@@ -1,0 +1,5 @@
+{
+  "catalog": "/mfe/catalog/remoteEntry.js",
+  "cart": "/mfe/cart/remoteEntry.js",
+  "checkout": "/mfe/checkout/remoteEntry.js"
+}

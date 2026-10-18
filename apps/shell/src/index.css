@@ -1,0 +1,5 @@
+@import 'tailwindcss';
+@import '@shopflow/ui/theme.css';
+
+/* Tailwind only scans this app by default: also scan the shared components. */
+@source '../../../packages/ui/src';

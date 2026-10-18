@@ -1,0 +1,11 @@
+/*
+ * CSS shipped WITH this remote. Every class in this remote uses the "cat:" prefix
+ * (cat:flex, cat:sm:grid-cols-2...), so this file can never override the shell's
+ * classes or another remote's (separate stylesheets + same class names = the
+ * last one loaded wins). Shared components from @shopflow/ui use the shell's
+ * unprefixed classes, which the shell's own CSS provides.
+ */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme) prefix(cat);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import '@shopflow/ui/theme.css';
