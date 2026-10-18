@@ -13,7 +13,7 @@ function OrderRow({ order }: { order: OrderSummary }) {
         <Package className="chk:size-5" aria-hidden />
       </div>
 
-      <Link to={routes.order(order.id)} className="chk:min-w-0 chk:flex-1 chk:rounded chk:hover:text-primary">
+      <Link to={routes.order(order.id)} className="chk:min-w-40 chk:flex-1 chk:rounded chk:hover:text-primary">
         <p className="chk:truncate chk:font-semibold chk:text-ink">{order.title ?? `Order ${shortId(order.id)}`}</p>
         <p className="chk:text-sm chk:text-muted">
           {formatDate(order.createdAt)}
@@ -22,7 +22,7 @@ function OrderRow({ order }: { order: OrderSummary }) {
         </p>
       </Link>
 
-      <div className="chk:flex chk:items-center chk:gap-3">
+      <div className="chk:ml-auto chk:flex chk:items-center chk:gap-3">
         {order.syncing ? (
           <span className="chk:inline-flex chk:items-center chk:gap-1 chk:text-xs chk:text-muted">
             <Loader2 className="chk:size-3 chk:animate-spin" aria-hidden /> Updating…

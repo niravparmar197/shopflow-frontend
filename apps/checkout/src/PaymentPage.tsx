@@ -215,9 +215,9 @@ export function PaymentPage() {
         <div className="chk:text-center">
           <p className="chk:text-sm chk:text-muted">Order {shortId(orderId)}</p>
           <h1 className="chk:mt-1 chk:text-sm chk:font-medium chk:text-ink">Amount to pay</h1>
-          <Price paise={p.amountPaise} className="chk:text-4xl chk:font-bold chk:text-ink" />
+          <Price paise={p.amountPaise} className="chk:mt-1 chk:block chk:text-4xl chk:font-bold chk:text-ink" />
           {secondsLeft !== null && (
-            <p className="chk:mt-2 chk:inline-flex chk:items-center chk:gap-1.5 chk:text-sm chk:text-muted">
+            <p className="chk:mt-2 chk:flex chk:justify-center chk:items-center chk:gap-1.5 chk:text-sm chk:text-muted">
               <Clock className="chk:size-4" aria-hidden /> Pay within {mmss(secondsLeft)}
             </p>
           )}

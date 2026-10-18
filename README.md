@@ -4,7 +4,7 @@ The web shop for the **[ShopFlow microservices](https://github.com/niravparmar19
 
 **Stack:** React 19 · TypeScript (strict) · Vite 8 · Module Federation 2 (`@module-federation/vite`) · React Router 7 · TanStack Query 5 · Tailwind CSS 4 · Vitest · Playwright
 
-> **Status:** F0–F6 done: sign up → browse → cart → place order → pay → track. Next: F7 (polish) and F8 (deploy on Stage 1).
+> **Status:** F0–F7 done: sign up → browse → cart → place order → pay → track, plus a polish pass. Next: F8 (deploy on Stage 1).
 
 ```mermaid
 flowchart LR
@@ -206,7 +206,7 @@ CI (`.github/workflows/ci.yml`) runs on every PR: typecheck, lint, unit tests, b
 - [x] **F4** Place order: Idempotency-Key, PRICE_CHANGED / SOLD_OUT / SERVER_BUSY
 - [x] **F5** Pay: fake provider (dev), Razorpay adapter, wait for the payment row
 - [x] **F6** My orders + live tracking timeline
-- [ ] **F7** Polish: a11y pass, more e2e
+- [x] **F7** Polish: active nav link, "Page not found" inside remotes, error reference in toasts, pay and mobile orders layout
 - [ ] **F8** Deploy on Stage 1: Docker (nginx), Caddy route, ECR, release workflow
 
 ## License

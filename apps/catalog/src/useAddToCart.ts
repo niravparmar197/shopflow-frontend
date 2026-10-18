@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useLocation, useNavigate } from 'react-router';
-import { cartApi, describeError, type Product } from '@shopflow/api';
-import { emit, routes, toast, useSession } from '@shopflow/shared';
+import { cartApi, type Product } from '@shopflow/api';
+import { emit, routes, toast, toastError, useSession } from '@shopflow/shared';
 
 /**
  * "Add to cart" from the catalog. The catalog does not know how the cart
@@ -25,7 +25,7 @@ export function useAddToCart() {
       });
     },
     // e.g. 400 "Cart can have at most 20 different items", 429, 503
-    onError: (err) => toast({ kind: 'error', message: describeError(err).message }),
+    onError: toastError,
   });
 
   const add = (product: Product, qty = 1) => {

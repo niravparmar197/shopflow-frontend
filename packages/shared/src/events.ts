@@ -1,3 +1,5 @@
+import { describeError } from '@shopflow/api';
+
 /*
  * How micro frontends talk: browser events on window, never imports of each
  * other's code. The catalog says "the cart changed"; the cart remote listens
@@ -33,3 +35,9 @@ export function on<K extends ShopFlowEventName>(
 }
 
 export const toast = (detail: ShopFlowEvents['toast']) => emit('toast', detail);
+
+/** An error toast with a friendly message; server and network errors also show the id to quote. */
+export const toastError = (err: unknown) => {
+  const { message, reference } = describeError(err);
+  toast({ kind: 'error', message, detail: reference ? `Reference: ${reference}` : undefined });
+};

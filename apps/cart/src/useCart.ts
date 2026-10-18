@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { cartApi, describeError, type Cart } from '@shopflow/api';
-import { emit, toast, useSession, useShopFlowEvent } from '@shopflow/shared';
+import { cartApi, type Cart } from '@shopflow/api';
+import { emit, toastError, useSession, useShopFlowEvent } from '@shopflow/shared';
 
 // Per user, so a different login never sees the old cart.
 const cartKey = (userId: string | undefined) => ['cart', userId ?? 'guest'] as const;
@@ -39,7 +39,7 @@ export function useCartAction<V>(
       emit('cart-changed', { itemCount: cart.itemCount, source: 'cart' });
     },
     onError: (err) => {
-      if (options.toastErrors !== false) toast({ kind: 'error', message: describeError(err).message });
+      if (options.toastErrors !== false) toastError(err);
       void queryClient.invalidateQueries({ queryKey: ['cart'] }); // show the real state again
     },
   });

@@ -5,7 +5,7 @@ import {
   type InputHTMLAttributes,
   type ReactNode,
 } from 'react';
-import { AlertCircle, CheckCircle2, Info, Loader2, Minus, PackageOpen, Plus, TriangleAlert } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Info, Loader2, Minus, PackageOpen, Plus, TriangleAlert, SearchX } from 'lucide-react';
 import { cx } from './cx';
 import { formatPaise } from './format';
 
@@ -282,6 +282,20 @@ export function EmptyState({
       {text && <p className="max-w-sm text-sm text-muted">{text}</p>}
       {action}
     </div>
+  );
+}
+
+/** "Page not found", for the shell and for unknown sub-routes inside a remote. */
+export function NotFound({ action }: { action?: ReactNode }) {
+  return (
+    <Container>
+      <EmptyState
+        icon={<SearchX className="size-7" aria-hidden />}
+        title="Page not found"
+        text="The page you are looking for does not exist or has moved."
+        action={action}
+      />
+    </Container>
   );
 }
 

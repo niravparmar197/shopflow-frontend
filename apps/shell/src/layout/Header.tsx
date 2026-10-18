@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router';
+import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { ChevronDown, LogOut, Receipt, Search, ShoppingBag, User } from 'lucide-react';
 import { logout } from '@shopflow/api';
 import { routes, toast, useSession } from '@shopflow/shared';
@@ -156,9 +156,14 @@ export function Header() {
         <Logo />
         <SearchBox className="mx-auto hidden max-w-md md:block" />
         <nav className="ml-auto flex items-center gap-1 sm:gap-2 md:ml-0" aria-label="Main">
-          <Link to={routes.orders} className="hidden rounded-lg px-3 py-2 text-sm font-semibold text-ink-soft hover:bg-primary-soft hover:text-ink sm:block">
+          <NavLink
+            to={routes.orders}
+            className={({ isActive }) =>
+              cx('hidden rounded-lg px-3 py-2 text-sm font-semibold hover:bg-primary-soft hover:text-ink sm:block', isActive ? 'bg-primary-soft text-primary' : 'text-ink-soft')
+            }
+          >
             Orders
-          </Link>
+          </NavLink>
           <CartButton />
           <UserMenu />
         </nav>

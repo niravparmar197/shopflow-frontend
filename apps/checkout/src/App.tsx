@@ -1,4 +1,6 @@
-import { Route, Routes } from 'react-router';
+import { Route, Routes, useNavigate } from 'react-router';
+import { routes } from '@shopflow/shared';
+import { Button, NotFound } from '@shopflow/ui';
 import { CheckoutPage } from './CheckoutPage';
 import { OrdersPage } from './OrdersPage';
 import { OrderTrackingPage } from './OrderTrackingPage';
@@ -17,6 +19,12 @@ interface CheckoutAppProps {
  *   /orders/:orderId      → tracking
  *   /orders/:orderId/pay  → payment
  */
+/** An unknown sub-route (e.g. /orders/x/y). */
+function Missing() {
+  const navigate = useNavigate();
+  return <NotFound action={<Button onClick={() => navigate(routes.orders)}>My orders</Button>} />;
+}
+
 export default function CheckoutApp({ section = 'orders' }: CheckoutAppProps) {
   if (section === 'checkout') return <CheckoutPage />;
   return (
@@ -24,6 +32,7 @@ export default function CheckoutApp({ section = 'orders' }: CheckoutAppProps) {
       <Route index element={<OrdersPage />} />
       <Route path=":orderId" element={<OrderTrackingPage />} />
       <Route path=":orderId/pay" element={<PaymentPage />} />
+      <Route path="*" element={<Missing />} />
     </Routes>
   );
 }
