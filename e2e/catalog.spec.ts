@@ -77,9 +77,10 @@ test('search from the header sends q and price filters in paise', async ({ page,
   await page.getByLabel('Max').fill('20000');
   await page.getByRole('button', { name: 'Apply price' }).click();
   await expect(page).toHaveURL(/min=1000&max=20000/);
+  // The request for the new filters starts just AFTER the URL changes: wait for it.
+  await expect.poll(() => calls.at(-1)?.searchParams.get('minPrice')).toBe('100000');
   const last = calls.at(-1)!;
   expect(last.searchParams.get('q')).toBe('phone');
-  expect(last.searchParams.get('minPrice')).toBe('100000');
   expect(last.searchParams.get('maxPrice')).toBe('2000000');
 });
 
