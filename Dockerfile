@@ -21,7 +21,14 @@ COPY . .
 RUN npm run build
 
 # ---------- run ----------
-FROM nginxinc/nginx-unprivileged:1.28-alpine
+# stable-alpine: rebuilt upstream with each nginx stable + Alpine release (a pinned
+# 1.28-alpine kept old nginx/OpenSSL/musl and failed the Trivy gate).
+FROM nginxinc/nginx-unprivileged:stable-alpine
+# apk upgrade: pull Alpine security fixes newer than the base image (Trivy gate),
+# same idea as `apt-get upgrade` in the backend image. Then back to non-root.
+USER root
+RUN apk upgrade --no-cache
+USER 101
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY nginx/security-headers.conf /etc/nginx/snippets/security-headers.conf
 COPY --from=build /app/dist-web /usr/share/nginx/html
