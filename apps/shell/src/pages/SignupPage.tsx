@@ -4,6 +4,7 @@ import { describeError, isApiError, login, signup } from '@shopflow/api';
 import { routes, toast, useSession } from '@shopflow/shared';
 import { Alert, Button, Input } from '@shopflow/ui';
 import { AuthCard, usePasswordToggle } from './AuthCard';
+import { PASSWORD_HINT, passwordProblem } from './password';
 
 interface Fields {
   name: string;
@@ -18,8 +19,8 @@ export function validateSignup(f: Fields): Errors {
   const errors: Errors = {};
   if (f.name.trim().length < 2 || f.name.trim().length > 80) errors.name = 'Enter your name (2–80 characters)';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) errors.email = 'Enter a valid email address';
-  if (f.password.length < 8 || f.password.length > 72) errors.password = 'Use 8–72 characters';
-  else if (!/[A-Za-z]/.test(f.password) || !/\d/.test(f.password)) errors.password = 'Use at least one letter and one digit';
+  const password = passwordProblem(f.password);
+  if (password) errors.password = password;
   return errors;
 }
 
@@ -49,7 +50,7 @@ export function SignupPage() {
     try {
       await signup({ name: fields.name.trim(), email: fields.email.trim(), password: fields.password });
       await login(fields.email.trim(), fields.password); // signup returns no token
-      toast({ kind: 'success', message: 'Account created. Welcome to ShopFlow!' });
+      toast({ kind: 'success', message: 'Account created. We sent you a link to confirm your email.' });
       navigate(routes.home, { replace: true });
     } catch (err) {
       if (isApiError(err) && err.status === 409) setErrors({ email: 'This email is already registered' });
@@ -83,7 +84,7 @@ export function SignupPage() {
           value={fields.password}
           onChange={set('password')}
           error={errors.password}
-          hint="8–72 characters, at least one letter and one digit"
+          hint={PASSWORD_HINT}
           trailing={password.toggle}
         />
         <Button type="submit" size="lg" fullWidth loading={busy}>

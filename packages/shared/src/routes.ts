@@ -11,6 +11,11 @@ export const routes = {
   login: (returnTo?: string) =>
     returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login',
   signup: '/signup',
+  // Account (Phase 2 P3). Email links carry the token after '#'.
+  account: '/account',
+  forgotPassword: '/forgot-password',
+  resetPassword: '/reset-password',
+  verifyEmail: '/verify-email',
   // Admin micro frontend (admin role only)
   admin: '/admin',
   adminProducts: '/admin/products',

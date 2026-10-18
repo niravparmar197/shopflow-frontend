@@ -7,6 +7,8 @@ const customer = {
   role: 'customer',
   isActive: true,
   createdAt: '2026-10-01T10:00:00.000Z',
+  phone: null as string | null,
+  emailVerifiedAt: '2026-10-01T10:05:00.000Z' as string | null,
 };
 
 const json = (route: Route, status: number, body: unknown, headers: Record<string, string> = {}) =>
@@ -18,9 +20,16 @@ const unauthorized = { code: 'UNAUTHORIZED', message: 'Missing refresh token', c
  * A tiny fake gateway. `loggedIn` decides what /v1/auth/refresh answers.
  * Tests add more routes on top (later routes win in Playwright).
  */
-export async function fakeGateway(page: Page, opts: { loggedIn?: boolean; role?: 'customer' | 'admin' } = {}) {
+export async function fakeGateway(
+  page: Page,
+  opts: { loggedIn?: boolean; role?: 'customer' | 'admin'; verified?: boolean } = {},
+) {
   let loggedIn = opts.loggedIn ?? false;
-  const user = { ...customer, role: opts.role ?? 'customer' };
+  const user = {
+    ...customer,
+    role: opts.role ?? 'customer',
+    emailVerifiedAt: opts.verified === false ? null : customer.emailVerifiedAt,
+  };
   await page.route('**/v1/**', (route) => json(route, 404, { code: 'NOT_FOUND', message: 'Not mocked', correlationId: 'e2e' }));
   await page.route('**/v1/auth/refresh', (route) =>
     loggedIn ? json(route, 200, { accessToken: 'tok', tokenType: 'Bearer', expiresIn: 900 }) : json(route, 401, unauthorized),
@@ -40,7 +49,7 @@ export async function fakeGateway(page: Page, opts: { loggedIn?: boolean; role?:
     json(route, 200, { items: [], itemCount: 0, subtotalPaise: 0, pricingAvailable: true, coupon: null, discountPaise: 0, totalPaise: 0 }),
   );
   await page.route('**/v1/products?*', (route) => json(route, 200, { items: [], nextCursor: null }));
-  return { json };
+  return { json, user };
 }
 
 export const test = base;
