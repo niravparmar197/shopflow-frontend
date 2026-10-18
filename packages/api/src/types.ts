@@ -108,6 +108,40 @@ export interface Order {
   currency: string;
   items: OrderItem[];
   createdAt: string;
+  /** A copy of the address at checkout (null on older orders). */
+  shippingAddress: ShippingAddress | null;
+  /** Set by an admin when it ships. */
+  carrier: string | null;
+  trackingNumber: string | null;
+}
+
+/** Where an order goes: the copy stored on the order. */
+export interface ShippingAddress {
+  fullName: string;
+  phone: string; // 10 digits
+  line1: string;
+  line2: string | null;
+  city: string;
+  state: string;
+  pincode: string; // 6 digits
+}
+
+/** A saved address in the user's address book. */
+export interface Address extends ShippingAddress {
+  id: string;
+  isDefault: boolean;
+  createdAt: string;
+}
+
+export interface AddressInput {
+  fullName: string;
+  phone: string;
+  line1: string;
+  line2?: string;
+  city: string;
+  state: string;
+  pincode: string;
+  isDefault?: boolean;
 }
 
 export interface OrderSummary {

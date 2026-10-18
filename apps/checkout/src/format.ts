@@ -13,3 +13,13 @@ export const canPay = (o: { status: string; paymentStatus: string | null }) =>
 
 export const linkButton =
   'chk:inline-flex chk:items-center chk:justify-center chk:rounded-lg chk:bg-primary chk:px-4 chk:py-2 chk:text-sm chk:font-semibold chk:text-white chk:hover:bg-primary-hover';
+
+/** "12, Shanti Nagar, SG Highway, Ahmedabad, Gujarat 380015" */
+export const addressLines = (a: { line1: string; line2: string | null; city: string; state: string; pincode: string }) =>
+  [a.line1, a.line2, `${a.city}, ${a.state} ${a.pincode}`].filter(Boolean).join(', ');
+
+/** "9876543210" → "98765 43210" */
+export const formatPhone = (p: string) => (p.length === 10 ? `${p.slice(0, 5)} ${p.slice(5)}` : p);
+
+/** Before it ships, an order can be cancelled (a paid one is refunded). */
+export const canCancel = (status: string) => status === 'PENDING' || status === 'CONFIRMED' || status === 'PAID';
