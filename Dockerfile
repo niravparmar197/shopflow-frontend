@@ -13,6 +13,7 @@ COPY apps/shell/package.json apps/shell/
 COPY apps/catalog/package.json apps/catalog/
 COPY apps/cart/package.json apps/cart/
 COPY apps/checkout/package.json apps/checkout/
+COPY apps/admin/package.json apps/admin/
 COPY packages/api/package.json packages/api/
 COPY packages/ui/package.json packages/ui/
 COPY packages/shared/package.json packages/shared/

@@ -12,8 +12,8 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "dev": "concurrently -k -n shell,catalog,cart,checkout -c blue,green,magenta,yellow \"npm:dev -w @shopflow/shell\" \"npm:dev -w @shopflow/catalog\" \"npm:dev -w @shopflow/cart\" \"npm:dev -w @shopflow/checkout\"",
-    "build": "npm run build -w @shopflow/catalog -w @shopflow/cart -w @shopflow/checkout -w @shopflow/shell && node scripts/assemble.mjs",
+    "dev": "concurrently -k -n shell,catalog,cart,checkout,admin -c blue,green,magenta,yellow,cyan \"npm:dev -w @shopflow/shell\" \"npm:dev -w @shopflow/catalog\" \"npm:dev -w @shopflow/cart\" \"npm:dev -w @shopflow/checkout\" \"npm:dev -w @shopflow/admin\"",
+    "build": "npm run build -w @shopflow/catalog -w @shopflow/cart -w @shopflow/checkout -w @shopflow/admin -w @shopflow/shell && node scripts/assemble.mjs",
     "start": "node scripts/serve.mjs",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "eslint . && node scripts/check-css-prefix.mjs",

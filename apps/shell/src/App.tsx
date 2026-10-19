@@ -70,6 +70,16 @@ export function App() {
               }
             />
 
+            {/* admin remote: products, stock, flash sales, coupons, all orders (admins only) */}
+            <Route
+              path="/admin/*"
+              element={
+                <RequireAuth role="admin">
+                  <RemoteComponent remote="admin" module="./App" label="The admin panel" />
+                </RequireAuth>
+              }
+            />
+
             {/* shell's own pages */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />

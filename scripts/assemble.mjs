@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
 const out = resolve(root, 'dist-web');
-const remotes = ['catalog', 'cart', 'checkout'];
+const remotes = ['catalog', 'cart', 'checkout', 'admin'];
 
 rmSync(out, { recursive: true, force: true });
 for (const app of ['shell', ...remotes]) {

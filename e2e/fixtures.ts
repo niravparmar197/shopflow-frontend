@@ -1,6 +1,6 @@
 import { test as base, type Page, type Route } from '@playwright/test';
 
-const user = {
+const customer = {
   id: 'u1',
   email: 'asha@shop.in',
   fullName: 'Asha Patel',
@@ -18,8 +18,9 @@ const unauthorized = { code: 'UNAUTHORIZED', message: 'Missing refresh token', c
  * A tiny fake gateway. `loggedIn` decides what /v1/auth/refresh answers.
  * Tests add more routes on top (later routes win in Playwright).
  */
-export async function fakeGateway(page: Page, opts: { loggedIn?: boolean } = {}) {
+export async function fakeGateway(page: Page, opts: { loggedIn?: boolean; role?: 'customer' | 'admin' } = {}) {
   let loggedIn = opts.loggedIn ?? false;
+  const user = { ...customer, role: opts.role ?? 'customer' };
   await page.route('**/v1/**', (route) => json(route, 404, { code: 'NOT_FOUND', message: 'Not mocked', correlationId: 'e2e' }));
   await page.route('**/v1/auth/refresh', (route) =>
     loggedIn ? json(route, 200, { accessToken: 'tok', tokenType: 'Bearer', expiresIn: 900 }) : json(route, 401, unauthorized),
