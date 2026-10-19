@@ -49,6 +49,17 @@ export function App() {
             <Route path="/" element={<RemoteComponent remote="catalog" module="./App" label="The catalog" props={{ section: 'home' }} />} />
             <Route path="/products/*" element={<RemoteComponent remote="catalog" module="./App" label="The catalog" props={{ section: 'products' }} />} />
 
+            {/* catalog remote, Phase 2 P5: saved products, flash deals */}
+            <Route
+              path="/wishlist"
+              element={
+                <RequireAuth>
+                  <RemoteComponent remote="catalog" module="./App" label="Your wishlist" props={{ section: 'wishlist' }} />
+                </RequireAuth>
+              }
+            />
+            <Route path="/deals" element={<RemoteComponent remote="catalog" module="./App" label="Flash deals" props={{ section: 'deals' }} />} />
+
             {/* cart remote */}
             <Route
               path="/cart"

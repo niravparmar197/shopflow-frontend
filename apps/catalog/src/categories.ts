@@ -1,14 +1,33 @@
-/*
- * The product service stores the category as a lowercase word and has no
- * "list categories" endpoint yet, so the list lives here.
- */
-export const CATEGORIES = [
-  { id: 'phones', label: 'Phones' },
-  { id: 'laptops', label: 'Laptops' },
-  { id: 'watches', label: 'Watches' },
-  { id: 'shoes', label: 'Shoes' },
-  { id: 'shirts', label: 'Shirts' },
-] as const;
+import { useQuery } from '@tanstack/react-query';
+import { productsApi } from '@shopflow/api';
 
-export const categoryLabel = (id: string) =>
-  CATEGORIES.find((c) => c.id === id)?.label ?? id.charAt(0).toUpperCase() + id.slice(1);
+/** Nicer names for the categories we know; others get a capital letter. */
+const LABELS: Record<string, string> = {
+  phones: 'Phones',
+  laptops: 'Laptops',
+  watches: 'Watches',
+  shoes: 'Shoes',
+  shirts: 'Shirts',
+};
+
+export const categoryLabel = (id: string) => LABELS[id] ?? id.charAt(0).toUpperCase() + id.slice(1);
+
+export interface CategoryOption {
+  id: string;
+  label: string;
+  count?: number;
+}
+
+/** Used while the list loads, or if it can't be loaded. */
+const FALLBACK: CategoryOption[] = Object.entries(LABELS).map(([id, label]) => ({ id, label }));
+
+/** Categories from the product service (with counts), Phase 2 P5. */
+export function useCategories(): CategoryOption[] {
+  const query = useQuery({
+    queryKey: ['catalog', 'categories'],
+    queryFn: ({ signal }) => productsApi.categories(signal),
+    staleTime: 5 * 60_000,
+  });
+  if (!query.data?.length) return FALLBACK;
+  return query.data.map((c) => ({ id: c.slug, label: categoryLabel(c.slug), count: c.count }));
+}

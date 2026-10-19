@@ -11,6 +11,9 @@ export const routes = {
   login: (returnTo?: string) =>
     returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login',
   signup: '/signup',
+  // Phase 2 P5
+  wishlist: '/wishlist',
+  deals: '/deals',
   // Account (Phase 2 P3). Email links carry the token after '#'.
   account: '/account',
   forgotPassword: '/forgot-password',

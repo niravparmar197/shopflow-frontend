@@ -38,6 +38,60 @@ export interface Product {
   version: number;
   createdAt: string;
   attributes: Record<string, unknown>;
+  /** 1–5, one decimal; 0 when there are no reviews (Phase 2 P5) */
+  ratingAvg: number;
+  ratingCount: number;
+}
+
+export type ProductSort = 'newest' | 'price_asc' | 'price_desc';
+
+export interface Category {
+  slug: string;
+  count: number;
+}
+
+/** A review. Only customers who received the product can write one. */
+export interface Review {
+  id: string;
+  rating: number;
+  title: string;
+  body: string;
+  authorName: string;
+  verifiedPurchase: true;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReviewSummary {
+  ratingAvg: number;
+  ratingCount: number;
+  stars: Record<1 | 2 | 3 | 4 | 5, number>;
+}
+
+export interface ReviewPage extends Page<Review> {
+  /** First page only */
+  summary?: ReviewSummary;
+}
+
+export interface ReviewInput {
+  rating: number;
+  title?: string;
+  body: string;
+  authorName: string;
+}
+
+export interface WishlistItem {
+  productId: string;
+  createdAt: string;
+}
+
+/** A flash sale running now (public list) */
+export interface LiveFlashSale {
+  productId: string;
+  left: number;
+  total: number;
+  maxPerUser: number;
+  endsInSec: number;
 }
 
 export interface Page<T> {
@@ -52,6 +106,7 @@ export interface ProductQuery {
   maxPrice?: number; // paise
   cursor?: string;
   limit?: number;
+  sort?: ProductSort;
 }
 
 export interface CartLine {
@@ -61,6 +116,8 @@ export interface CartLine {
   category?: string;
   unitPricePaise?: number;
   lineTotalPaise?: number;
+  /** First product photo, when it has one */
+  image?: string;
   /** false when the product was removed or deactivated after it was added */
   available: boolean;
 }

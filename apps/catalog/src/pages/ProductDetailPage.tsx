@@ -7,14 +7,21 @@ import { routes } from '@shopflow/shared';
 import { Badge, Button, Container, EmptyState, ErrorState, Price, QuantityStepper, Skeleton } from '@shopflow/ui';
 import { categoryLabel } from '../categories';
 import { ProductImage } from '../components/ProductImage';
+import { Reviews } from '../components/Reviews';
+import { Stars } from '../components/Stars';
+import { WishlistButton } from '../components/WishlistButton';
 import { useAddToCart } from '../useAddToCart';
+import { useWishlist } from '../useWishlist';
 
 const KNOWN_LABELS: Record<string, string> = { ram: 'RAM', ssd: 'SSD', cpu: 'CPU', gpu: 'GPU', os: 'OS' };
 
 /** "ram" → "RAM", "batteryLife" → "Battery life" */
-const attributeLabel = (key: string) =>
-  KNOWN_LABELS[key.toLowerCase()] ??
-  (key.charAt(0).toUpperCase() + key.slice(1).replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase().replace(/^./, (c) => c.toUpperCase()));
+export const attributeLabel = (key: string) => {
+  const known = KNOWN_LABELS[key.toLowerCase()];
+  if (known) return known;
+  const words = key.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+};
 
 function Gallery({ product }: { product: Product }) {
   const [index, setIndex] = useState(0);
@@ -46,6 +53,7 @@ export function ProductDetailPage() {
   const { slug = '' } = useParams();
   const [qty, setQty] = useState(1);
   const { add, pendingId } = useAddToCart();
+  const wishlist = useWishlist();
 
   const query = useQuery({
     queryKey: ['catalog', 'product', slug],
@@ -112,6 +120,19 @@ export function ProductDetailPage() {
           <div>
             <Badge tone="primary">{categoryLabel(product.category)}</Badge>
             <h1 className="cat:mt-3 cat:text-2xl cat:font-bold cat:tracking-tight cat:text-ink cat:sm:text-3xl">{product.name}</h1>
+            <a href="#reviews" className="cat:mt-2 cat:inline-flex cat:items-center cat:gap-2 cat:text-sm cat:text-muted cat:hover:text-ink">
+              {product.ratingCount ? (
+                <>
+                  <Stars value={product.ratingAvg} />
+                  <span>
+                    <span className="cat:font-semibold cat:text-ink">{product.ratingAvg.toFixed(1)}</span> · {product.ratingCount}{' '}
+                    {product.ratingCount === 1 ? 'review' : 'reviews'}
+                  </span>
+                </>
+              ) : (
+                'No reviews yet'
+              )}
+            </a>
           </div>
 
           <Price paise={product.pricePaise} className="cat:text-3xl cat:font-bold cat:text-ink" />
@@ -124,6 +145,7 @@ export function ProductDetailPage() {
               {pendingId !== product.id && <ShoppingCart className="cat:size-5" aria-hidden />}
               Add to cart
             </Button>
+            <WishlistButton variant="full" saved={wishlist.has(product.id)} onToggle={() => wishlist.toggle(product.id)} name={product.name} />
           </div>
 
           <ul className="cat:grid cat:gap-2 cat:rounded-card cat:border cat:border-line cat:bg-surface cat:p-4 cat:text-sm cat:text-ink-soft">
@@ -150,6 +172,8 @@ export function ProductDetailPage() {
           )}
         </div>
       </div>
+
+      <Reviews productId={product.id} />
     </Container>
   );
 }
