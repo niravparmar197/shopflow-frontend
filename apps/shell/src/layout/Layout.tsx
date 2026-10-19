@@ -12,6 +12,8 @@ function titleFor(pathname: string): string {
   if (pathname === '/products') return 'Products';
   if (pathname.startsWith('/products/')) return 'Product';
   if (pathname === '/cart') return 'Your cart';
+  if (pathname === '/wishlist') return 'Your wishlist';
+  if (pathname === '/deals') return 'Flash deals';
   if (pathname.startsWith('/checkout')) return 'Checkout';
   if (pathname.startsWith('/admin')) return 'Admin';
   if (/^\/orders\/[^/]+\/pay\/?$/.test(pathname)) return 'Payment';

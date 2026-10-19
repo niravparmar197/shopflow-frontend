@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router';
-import { ChevronDown, LayoutDashboard, LogOut, Receipt, Search, ShoppingBag, User, UserCog } from 'lucide-react';
+import { ChevronDown, LayoutDashboard, LogOut, Receipt, Heart, Search, ShoppingBag, User, UserCog, Zap } from 'lucide-react';
 import { logout } from '@shopflow/api';
 import { routes, toast, useSession } from '@shopflow/shared';
 import { Button, cx } from '@shopflow/ui';
@@ -143,6 +143,12 @@ function UserMenu() {
           <Link to={routes.orders} onClick={() => setOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-sm text-ink-soft hover:bg-canvas">
             <Receipt className="size-4" aria-hidden /> My orders
           </Link>
+          <Link to={routes.wishlist} onClick={() => setOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-sm text-ink-soft hover:bg-canvas">
+            <Heart className="size-4" aria-hidden /> Wishlist
+          </Link>
+          <Link to={routes.deals} onClick={() => setOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-sm text-ink-soft hover:bg-canvas sm:hidden">
+            <Zap className="size-4" aria-hidden /> Flash deals
+          </Link>
           {user.role === 'admin' && (
             <Link to={routes.admin} onClick={() => setOpen(false)} className="flex items-center gap-2.5 px-4 py-2 text-sm text-ink-soft hover:bg-canvas">
               <LayoutDashboard className="size-4" aria-hidden /> Admin panel
@@ -187,6 +193,17 @@ export function Header() {
             }
           >
             Orders
+          </NavLink>
+          <NavLink
+            to={routes.deals}
+            className={({ isActive }) =>
+              cx(
+                'hidden items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold hover:bg-primary-soft hover:text-ink sm:flex',
+                isActive ? 'bg-primary-soft text-primary' : 'text-ink-soft',
+              )
+            }
+          >
+            <Zap className="size-4 text-danger" aria-hidden /> Deals
           </NavLink>
           <AdminLink />
           <CartButton />

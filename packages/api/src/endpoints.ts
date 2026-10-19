@@ -21,6 +21,12 @@ import type {
   Payment,
   Product,
   ProductQuery,
+  Category,
+  LiveFlashSale,
+  Review,
+  ReviewInput,
+  ReviewPage,
+  WishlistItem,
 } from './types';
 
 const enc = encodeURIComponent;
@@ -31,6 +37,37 @@ export const productsApi = {
     request<Page<Product>>('/v1/products', { auth: false, query: { ...query }, signal }),
   get: (idOrSlug: string, signal?: AbortSignal) =>
     request<Product>(`/v1/products/${enc(idOrSlug)}`, { auth: false, signal }),
+  /** Exactly these products, in this order (up to 50); missing ones are skipped. */
+  byIds: async (ids: string[], signal?: AbortSignal) =>
+    ids.length === 0
+      ? []
+      : (await request<Page<Product>>('/v1/products', { auth: false, query: { ids: ids.join(',') }, signal })).items,
+  categories: async (signal?: AbortSignal) =>
+    (await request<{ items: Category[] }>('/v1/products/categories', { auth: false, signal })).items,
+};
+
+/** Reviews (product service). Reading is public; writing needs a delivered order. */
+export const reviewsApi = {
+  list: (productId: string, cursor?: string, signal?: AbortSignal) =>
+    request<ReviewPage>(`/v1/products/${enc(productId)}/reviews`, { auth: false, query: { cursor, limit: 5 }, signal }),
+  /** 404 REVIEW_NOT_FOUND when you haven't written one */
+  mine: (productId: string, signal?: AbortSignal) => request<Review>(`/v1/products/${enc(productId)}/reviews/mine`, { signal }),
+  /** Create or edit. 403 NOT_A_BUYER before delivery. */
+  write: (productId: string, body: ReviewInput) =>
+    request<Review>(`/v1/products/${enc(productId)}/reviews`, { method: 'PUT', body }),
+  remove: (productId: string) => request<void>(`/v1/products/${enc(productId)}/reviews`, { method: 'DELETE' }),
+};
+
+/** The user's saved products (user service): ids only. */
+export const wishlistApi = {
+  list: async (signal?: AbortSignal) => (await request<{ items: WishlistItem[] }>('/v1/users/me/wishlist', { signal })).items,
+  add: (productId: string) => request<void>(`/v1/users/me/wishlist/${enc(productId)}`, { method: 'PUT' }),
+  remove: (productId: string) => request<void>(`/v1/users/me/wishlist/${enc(productId)}`, { method: 'DELETE' }),
+};
+
+/** Flash sales running now (inventory, public). */
+export const flashSalesApi = {
+  list: async (signal?: AbortSignal) => (await request<{ items: LiveFlashSale[] }>('/v1/flash-sales', { auth: false, signal })).items,
 };
 
 /** Order service: cart and coupons. The user id comes from the token only. */

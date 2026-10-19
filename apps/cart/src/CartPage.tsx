@@ -31,8 +31,12 @@ function LineRow({ line }: { line: CartLine }) {
 
   return (
     <li className={`cart:flex cart:gap-4 cart:py-4 ${line.available ? '' : 'cart:opacity-70'}`}>
-      <div className="cart:grid cart:size-20 cart:shrink-0 cart:place-items-center cart:rounded-lg cart:bg-primary-soft cart:text-primary/60">
-        <Package className="cart:size-8" aria-hidden />
+      <div className="cart:grid cart:size-20 cart:shrink-0 cart:place-items-center cart:overflow-hidden cart:rounded-lg cart:bg-primary-soft cart:text-primary/60">
+        {line.image ? (
+          <img src={line.image} alt="" loading="lazy" className="cart:size-full cart:object-cover" />
+        ) : (
+          <Package className="cart:size-8" aria-hidden />
+        )}
       </div>
 
       <div className="cart:flex cart:min-w-0 cart:flex-1 cart:flex-col cart:gap-3">

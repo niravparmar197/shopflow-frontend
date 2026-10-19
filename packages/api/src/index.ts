@@ -14,5 +14,16 @@ export {
   changePassword,
   updateProfile,
 } from './auth';
-export { productsApi, cartApi, ordersApi, paymentsApi, adminApi, addressesApi, uploadToStorage } from './endpoints';
+export {
+  productsApi,
+  cartApi,
+  ordersApi,
+  paymentsApi,
+  adminApi,
+  addressesApi,
+  reviewsApi,
+  wishlistApi,
+  flashSalesApi,
+  uploadToStorage,
+} from './endpoints';
 export { describeError } from './describe';

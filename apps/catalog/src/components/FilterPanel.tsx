@@ -1,10 +1,11 @@
 import { useId, useState, type FormEvent } from 'react';
 import { Button } from '@shopflow/ui';
-import { CATEGORIES } from '../categories';
+import { useCategories } from '../categories';
 import type { Filters } from '../filters';
 
 export function FilterPanel({ filters, onChange }: { filters: Filters; onChange: (next: Filters) => void }) {
   const id = useId();
+  const categories = useCategories();
   const [min, setMin] = useState(filters.min);
   const [max, setMax] = useState(filters.max);
   const priceError = min !== '' && max !== '' && Number(min) > Number(max) ? 'Min must be less than max' : null;
@@ -14,7 +15,7 @@ export function FilterPanel({ filters, onChange }: { filters: Filters; onChange:
     if (!priceError) onChange({ ...filters, min, max });
   };
 
-  const option = (id: string, label: string) => {
+  const option = (id: string, label: string, count?: number) => {
     const active = filters.category === id;
     return (
       <li key={id || 'all'}>
@@ -26,7 +27,10 @@ export function FilterPanel({ filters, onChange }: { filters: Filters; onChange:
             active ? 'cat:bg-primary-soft cat:font-semibold cat:text-primary' : 'cat:text-ink-soft cat:hover:bg-canvas'
           }`}
         >
-          {label}
+          <span className="cat:flex cat:items-center cat:justify-between cat:gap-2">
+            {label}
+            {count !== undefined && <span className="cat:text-xs cat:font-normal cat:text-muted">{count}</span>}
+          </span>
         </button>
       </li>
     );
@@ -40,7 +44,7 @@ export function FilterPanel({ filters, onChange }: { filters: Filters; onChange:
         </h2>
         <ul className="cat:flex cat:flex-col cat:gap-0.5">
           {option('', 'All products')}
-          {CATEGORIES.map((c) => option(c.id, c.label))}
+          {categories.map((c) => option(c.id, c.label, c.count))}
         </ul>
       </section>
 

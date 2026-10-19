@@ -7,8 +7,9 @@ import { Button, Container, EmptyState, ErrorState, Skeleton } from '@shopflow/u
 import { categoryLabel } from '../categories';
 import { FilterPanel } from '../components/FilterPanel';
 import { ProductCard } from '../components/ProductCard';
-import { hasFilters, readFilters, toQuery, writeFilters, type Filters } from '../filters';
+import { hasFilters, readFilters, SORT_OPTIONS, toQuery, writeFilters, type Filters } from '../filters';
 import { useAddToCart } from '../useAddToCart';
+import { useWishlist } from '../useWishlist';
 
 const PAGE_SIZE = 12;
 
@@ -44,6 +45,7 @@ export function ProductListPage({ showHero = false }: { showHero?: boolean }) {
   const filters = readFilters(params);
   const [showFilters, setShowFilters] = useState(false);
   const { add, pendingId } = useAddToCart();
+  const wishlist = useWishlist();
 
   const query = useInfiniteQuery({
     queryKey: ['catalog', 'products', toQuery(filters)],
@@ -56,7 +58,8 @@ export function ProductListPage({ showHero = false }: { showHero?: boolean }) {
     setParams(writeFilters(next));
     setShowFilters(false);
   };
-  const clear = () => setFilters({ q: '', category: '', min: '', max: '' });
+  // Clearing filters keeps the chosen order.
+  const clear = () => setFilters({ q: '', category: '', min: '', max: '', sort: filters.sort });
 
   const products = query.data?.pages.flatMap((p) => p.items) ?? [];
   const title = filters.q ? `Results for “${filters.q}”` : filters.category ? categoryLabel(filters.category) : 'All products';
@@ -92,9 +95,26 @@ export function ProductListPage({ showHero = false }: { showHero?: boolean }) {
                 <h1 className="cat:text-xl cat:font-bold cat:text-ink cat:sm:text-2xl">{title}</h1>
               )}
             </div>
-            <Button variant="secondary" size="sm" className="cat:lg:hidden" onClick={() => setShowFilters((s) => !s)} aria-expanded={showFilters} aria-controls="catalog-filters">
-              <SlidersHorizontal className="cat:size-4" aria-hidden /> Filters
-            </Button>
+            <div className="cat:flex cat:items-center cat:gap-2">
+              <label className="cat:flex cat:items-center cat:gap-2 cat:text-sm cat:text-muted">
+                <span className="cat:hidden cat:sm:inline">Sort by</span>
+                <select
+                  aria-label="Sort products"
+                  value={filters.sort}
+                  onChange={(e) => setParams(writeFilters({ ...filters, sort: e.target.value as Filters['sort'] }))}
+                  className="cat:h-8 cat:cursor-pointer cat:rounded-lg cat:border cat:border-line cat:bg-surface cat:px-2 cat:text-sm cat:font-medium cat:text-ink cat:outline-none cat:focus:border-primary cat:focus:ring-2 cat:focus:ring-primary/20"
+                >
+                  {SORT_OPTIONS.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Button variant="secondary" size="sm" className="cat:lg:hidden" onClick={() => setShowFilters((s) => !s)} aria-expanded={showFilters} aria-controls="catalog-filters">
+                <SlidersHorizontal className="cat:size-4" aria-hidden /> Filters
+              </Button>
+            </div>
           </div>
 
           {hasFilters(filters) && (
@@ -130,7 +150,13 @@ export function ProductListPage({ showHero = false }: { showHero?: boolean }) {
               <ul className="cat:grid cat:grid-cols-2 cat:gap-3 cat:sm:gap-4 cat:md:grid-cols-3 cat:xl:grid-cols-4">
                 {products.map((p) => (
                   <li key={p.id} className="cat:flex">
-                    <ProductCard product={p} onAdd={() => add(p)} adding={pendingId === p.id} />
+                    <ProductCard
+                      product={p}
+                      onAdd={() => add(p)}
+                      adding={pendingId === p.id}
+                      saved={wishlist.has(p.id)}
+                      onToggleSave={() => wishlist.toggle(p.id)}
+                    />
                   </li>
                 ))}
               </ul>

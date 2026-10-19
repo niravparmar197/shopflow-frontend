@@ -169,8 +169,12 @@ export function CheckoutPage() {
           <ul className="chk:mt-2 chk:divide-y chk:divide-line">
             {data.items.map((line) => (
               <li key={line.productId} className="chk:flex chk:items-center chk:gap-4 chk:py-4">
-                <div className="chk:grid chk:size-14 chk:shrink-0 chk:place-items-center chk:rounded-lg chk:bg-primary-soft chk:text-primary/60">
-                  <Package className="chk:size-6" aria-hidden />
+                <div className="chk:grid chk:size-14 chk:shrink-0 chk:place-items-center chk:overflow-hidden chk:rounded-lg chk:bg-primary-soft chk:text-primary/60">
+                  {line.image ? (
+                    <img src={line.image} alt="" loading="lazy" className="chk:size-full chk:object-cover" />
+                  ) : (
+                    <Package className="chk:size-6" aria-hidden />
+                  )}
                 </div>
                 <div className="chk:min-w-0 chk:flex-1">
                   <p className="chk:truncate chk:font-medium chk:text-ink">{line.name ?? 'Product'}</p>
