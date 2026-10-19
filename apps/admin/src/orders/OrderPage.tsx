@@ -1,11 +1,28 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 import { adminApi, describeError, isApiError } from '@shopflow/api';
-import { routes } from '@shopflow/shared';
-import { ErrorState, NotFound, PageHeader, Price, Spinner, StatusPill, formatDate, formatTime } from '@shopflow/ui';
+import { routes, saveFile, toastError } from '@shopflow/shared';
+import { Button, ErrorState, NotFound, PageHeader, Price, Spinner, StatusPill, formatDate, formatTime } from '@shopflow/ui';
 import { card, humanize, shortId, textLink } from '../format';
 import { OrderActions } from './OrderActions';
+
+const PAID = ['PAID', 'SHIPPED', 'DELIVERED'];
+
+/** The order's GST invoice as a PDF download. */
+function InvoiceButton({ id }: { id: string }) {
+  const download = useMutation({
+    mutationFn: () => adminApi.orders.invoice(id),
+    onSuccess: ({ blob, filename }) => saveFile(blob, filename ?? `invoice-${shortId(id)}.pdf`),
+    onError: toastError,
+  });
+  return (
+    <Button variant="secondary" size="sm" loading={download.isPending} onClick={() => download.mutate()}>
+      {!download.isPending && <FileText className="adm:size-4" aria-hidden />}
+      Invoice
+    </Button>
+  );
+}
 
 /** One order: customer, status, items and totals (write model, always current). */
 export function OrderPage() {
@@ -41,7 +58,13 @@ export function OrderPage() {
       <PageHeader
         title={`Order #${shortId(o.id)}`}
         subtitle={`Placed ${formatDate(o.createdAt)}, ${formatTime(o.createdAt)} · updated ${formatDate(o.updatedAt)}, ${formatTime(o.updatedAt)}`}
-        actions={<StatusPill status={o.status} />}
+        actions={
+          <div className="adm:flex adm:items-center adm:gap-3">
+            {/* A cancelled order shows it too: the API answers 409 if it was never paid. */}
+            {(PAID.includes(o.status) || o.status === 'CANCELLED') && <InvoiceButton id={o.id} />}
+            <StatusPill status={o.status} />
+          </div>
+        }
       />
       <div className="adm:grid adm:gap-6 adm:lg:grid-cols-[2fr_1fr]">
         <section className={card} aria-labelledby="items-title">

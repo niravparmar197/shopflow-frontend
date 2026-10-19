@@ -16,6 +16,12 @@ export const routes = {
   forgotPassword: '/forgot-password',
   resetPassword: '/reset-password',
   verifyEmail: '/verify-email',
+  // Policy pages (Phase 2 P4)
+  privacy: '/privacy',
+  terms: '/terms',
+  refundPolicy: '/refund-policy',
+  shippingPolicy: '/shipping-policy',
+  contact: '/contact',
   // Admin micro frontend (admin role only)
   admin: '/admin',
   adminProducts: '/admin/products',

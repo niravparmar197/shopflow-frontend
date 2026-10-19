@@ -6,6 +6,9 @@ import { RemoteComponent } from './federation/RemoteComponent';
 import { initRemotes } from './federation/remotes';
 import { Layout } from './layout/Layout';
 import { AccountPage } from './pages/AccountPage';
+import { ContactPage } from './pages/legal/ContactPage';
+import { LegalPage } from './pages/legal/LegalPage';
+import { LEGAL_DOCS } from './pages/legal/content';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -90,6 +93,10 @@ export function App() {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
+            {LEGAL_DOCS.map((d) => (
+              <Route key={d.slug} path={`/${d.slug}`} element={<LegalPage slug={d.slug} />} />
+            ))}
+            <Route path="/contact" element={<ContactPage />} />
             <Route
               path="/account"
               element={

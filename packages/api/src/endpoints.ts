@@ -1,4 +1,4 @@
-import { request, requestRaw } from './client';
+import { request, requestFile, requestRaw } from './client';
 import type {
   Address,
   AddressInput,
@@ -69,6 +69,8 @@ export const ordersApi = {
     request<OrderTracking>(`/v1/orders/${enc(id)}/tracking`, { signal }),
   /** Before it ships. A paid order is refunded automatically. */
   cancel: (id: string) => request<Order>(`/v1/orders/${enc(id)}/cancel`, { method: 'POST' }),
+  /** GST invoice PDF (paid orders; 409 INVOICE_NOT_READY before) */
+  invoice: (id: string) => requestFile(`/v1/orders/${enc(id)}/invoice`),
 };
 
 /** The fields the API accepts (no id / isDefault / createdAt; no null line2). */
@@ -162,6 +164,7 @@ export const adminApi = {
     deliver: (id: string) => request<AdminOrder>(`/v1/admin/orders/${enc(id)}/deliver`, { method: 'POST' }),
     /** Before it ships; a paid order is refunded automatically. */
     cancel: (id: string) => request<AdminOrder>(`/v1/admin/orders/${enc(id)}/cancel`, { method: 'POST' }),
+    invoice: (id: string) => requestFile(`/v1/admin/orders/${enc(id)}/invoice`),
   },
 };
 

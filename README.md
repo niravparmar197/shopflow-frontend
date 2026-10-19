@@ -4,7 +4,7 @@ The web shop for the **[ShopFlow microservices](https://github.com/niravparmar19
 
 **Stack:** React 19 · TypeScript (strict) · Vite 8 · Module Federation 2 (`@module-federation/vite`) · React Router 7 · TanStack Query 5 · Tailwind CSS 4 · Vitest · Playwright
 
-> **Status:** F0–F8 done; Phase 2 P1 (admin panel), P2 (address, cancel, ship / deliver) and P3 (account) built. **Live on AWS** (Stage 1): https://shopflow-nirav.duckdns.org (when the Stage 1 box is running). Sign up → browse → cart → place order → pay → track.
+> **Status:** F0–F8 done; Phase 2 P1 (admin panel), P2 (address, cancel, ship / deliver) P3 (account) and P4 (GST invoices, policy pages, SES emails) built. **Live on AWS** (Stage 1): https://shopflow-nirav.duckdns.org (when the Stage 1 box is running). Sign up → browse → cart → place order → pay → track.
 
 ```mermaid
 flowchart LR
@@ -156,16 +156,17 @@ On a 401, the client refreshes once (single flight: 10 parallel 401s → 1 refre
 | `/forgot-password`, `/reset-password#token=…` | shell | `POST /v1/auth/forgot-password`, `/reset-password` (the token sits after `#`, so it never reaches a server log; the page then removes it from the address bar) |
 | `/verify-email#token=…` | shell | `POST /v1/auth/verify-email` (sent once, even when React runs the effect twice) |
 | `/account` | shell | `PATCH /v1/users/me` (name, phone), `POST /v1/auth/change-password`, `POST /v1/users/me/verify-email` |
+| `/privacy`, `/terms`, `/refund-policy`, `/shipping-policy`, `/contact` | shell | none (static pages, linked from the footer; text in `apps/shell/src/pages/legal/content.ts`) |
 | `/`, `/products` | catalog | `GET /v1/products?q&category&minPrice&maxPrice&cursor&limit` |
 | `/products/:slug` | catalog | `GET /v1/products/:idOrSlug`, `POST /v1/cart/items` |
 | `/cart` + header badge | cart | `GET /v1/cart`, `PATCH`/`DELETE /v1/cart/items/:id`, `POST`/`DELETE /v1/cart/coupon` |
 | `/checkout` | checkout | `GET /v1/cart`, `GET/POST /v1/users/me/addresses`, `POST /v1/orders` (Idempotency-Key + `shippingAddress`) |
 | `/orders/:id/pay` | checkout | `POST /v1/payments/:id/checkout`, `GET /v1/payments/:id`, dev: `POST /v1/payments/dev/fake-pay/:id` |
 | `/orders` | checkout | `GET /v1/orders?cursor&limit` |
-| `/orders/:id` | checkout | `GET /v1/orders/:id/tracking`, `GET /v1/orders/:id`, `POST /v1/orders/:id/cancel` |
+| `/orders/:id` | checkout | `GET /v1/orders/:id/tracking`, `GET /v1/orders/:id`, `POST /v1/orders/:id/cancel`, `GET /v1/orders/:id/invoice` (PDF, fetched with the token, then saved) |
 | `/admin/products` | admin | `GET /v1/products`, `GET /v1/inventory/stock/:id` (per row) |
 | `/admin/products/new`, `/admin/products/:id` | admin | `POST /v1/products`, `PATCH /v1/products/:id` (with `version`), images: `POST …/images/upload-url` → upload to storage → `POST …/images/confirm`, `PUT /v1/inventory/stock/:id`, `GET/POST/DELETE /v1/inventory/flash-sales` |
-| `/admin/orders`, `/admin/orders/:id` | admin | `GET /v1/admin/orders?status&cursor`, `GET /v1/admin/orders/:id`, `POST …/:id/ship`, `…/deliver`, `…/cancel` |
+| `/admin/orders`, `/admin/orders/:id` | admin | `GET /v1/admin/orders?status&cursor`, `GET /v1/admin/orders/:id`, `POST …/:id/ship`, `…/deliver`, `…/cancel`, `GET …/:id/invoice` |
 | `/admin/coupons` | admin | `GET /v1/coupons`, `POST /v1/coupons` |
 
 All money is in **paise** (integers) and is formatted only at display time (`formatPaise`: 2499900 → ₹24,999).
@@ -260,7 +261,7 @@ CI (`.github/workflows/ci.yml`) runs on every PR: typecheck, lint, unit tests, b
 - [x] **P1** Admin panel: the `admin` remote at `/admin/*` (admin role only; customers see "No access"): products with live stock, create / edit (optimistic `version`), image upload, stock, flash sales, coupons, all orders with a status filter
 - [x] **P2** Checkout complete: address book + delivery address at checkout, cancel before shipping (refund + stock back), admin ship (courier, tracking) / deliver, tracking shows Shipped / Delivered
 - [x] **P3** Account: forgot / reset password by email link, email confirmation (soft: a banner + "send it again"), account page (name, phone, change password)
-- [ ] **P4** Email and legal: SES emails, legal pages, invoice PDF
+- [x] **P4** Email and legal: real emails through Amazon SES (backend, opt-in), policy pages (privacy, terms, refund, shipping, contact + grievance officer), GST invoice PDF on the order page and in admin
 - [ ] **P5** Shop polish: images in the shop, categories API, sorting, flash sale page, wishlist, reviews
 
 Skipped on purpose: real payments (the fake provider stays) and production extras (backups, custom domain, SEO, uptime).

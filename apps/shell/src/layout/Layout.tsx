@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router';
+import { LEGAL_DOCS } from '../pages/legal/content';
 import { Footer } from './Footer';
 import { Header } from './Header';
 import { Toaster } from './Toaster';
@@ -22,6 +23,9 @@ function titleFor(pathname: string): string {
   if (pathname === '/forgot-password') return 'Forgot password';
   if (pathname === '/reset-password') return 'New password';
   if (pathname === '/verify-email') return 'Confirm email';
+  if (pathname === '/contact') return 'Contact us';
+  const policy = LEGAL_DOCS.find((d) => pathname === `/${d.slug}`);
+  if (policy) return policy.title;
   return 'Page not found';
 }
 

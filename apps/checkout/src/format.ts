@@ -23,3 +23,8 @@ export const formatPhone = (p: string) => (p.length === 10 ? `${p.slice(0, 5)} $
 
 /** Before it ships, an order can be cancelled (a paid one is refunded). */
 export const canCancel = (status: string) => status === 'PENDING' || status === 'CONFIRMED' || status === 'PAID';
+
+/** A paid order has a GST invoice (kept after a cancel + refund). */
+export function hasInvoice(t: { status: string; paymentStatus: string | null }): boolean {
+  return ['PAID', 'SHIPPED', 'DELIVERED'].includes(t.status) || ['SUCCEEDED', 'REFUND_PENDING', 'REFUNDED'].includes(t.paymentStatus ?? '');
+}
