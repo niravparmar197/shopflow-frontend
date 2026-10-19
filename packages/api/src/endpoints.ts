@@ -1,5 +1,7 @@
 import { request, requestRaw } from './client';
 import type {
+  Address,
+  AddressInput,
   AdminOrder,
   AdminOrderSummary,
   Cart,
@@ -9,6 +11,7 @@ import type {
   ImageUploadTarget,
   OrderStatus,
   ProductInput,
+  ShippingAddress,
   Stock,
   CheckoutSession,
   Order,
@@ -47,11 +50,15 @@ export const cartApi = {
 /** Order service: orders (write model) and tracking (read model). */
 export const ordersApi = {
   /** Same key on retry → the same order, never two (`replayed: true`). */
-  place: async (idempotencyKey: string, expectedTotalPaise?: number) => {
+  place: async (idempotencyKey: string, expectedTotalPaise?: number, shippingAddress?: ShippingAddress) => {
     const res = await requestRaw<Order>('/v1/orders', {
       method: 'POST',
       idempotencyKey,
-      body: expectedTotalPaise === undefined ? {} : { expectedTotalPaise },
+      body: {
+        ...(expectedTotalPaise === undefined ? {} : { expectedTotalPaise }),
+        // The order keeps a copy; later address-book edits don't change it.
+        ...(shippingAddress ? { shippingAddress: toAddressBody(shippingAddress) } : {}),
+      },
     });
     return { order: res.data, replayed: res.headers.get('Idempotent-Replayed') === 'true' };
   },
@@ -60,6 +67,32 @@ export const ordersApi = {
   get: (id: string, signal?: AbortSignal) => request<Order>(`/v1/orders/${enc(id)}`, { signal }),
   tracking: (id: string, signal?: AbortSignal) =>
     request<OrderTracking>(`/v1/orders/${enc(id)}/tracking`, { signal }),
+  /** Before it ships. A paid order is refunded automatically. */
+  cancel: (id: string) => request<Order>(`/v1/orders/${enc(id)}/cancel`, { method: 'POST' }),
+};
+
+/** The fields the API accepts (no id / isDefault / createdAt; no null line2). */
+const toAddressBody = (a: ShippingAddress | AddressInput) => ({
+  fullName: a.fullName,
+  phone: a.phone,
+  line1: a.line1,
+  ...(a.line2 ? { line2: a.line2 } : {}),
+  city: a.city,
+  state: a.state,
+  pincode: a.pincode,
+});
+
+/** User service: the caller's address book. */
+export const addressesApi = {
+  list: async (signal?: AbortSignal) => (await request<{ items: Address[] }>('/v1/users/me/addresses', { signal })).items,
+  create: (input: AddressInput) =>
+    request<Address>('/v1/users/me/addresses', {
+      method: 'POST',
+      body: { ...toAddressBody(input), ...(input.isDefault ? { isDefault: true } : {}) },
+    }),
+  update: (id: string, changes: Partial<AddressInput>) =>
+    request<Address>(`/v1/users/me/addresses/${enc(id)}`, { method: 'PATCH', body: changes }),
+  remove: (id: string) => request<void>(`/v1/users/me/addresses/${enc(id)}`, { method: 'DELETE' }),
 };
 
 /** Payment service. */
@@ -122,6 +155,13 @@ export const adminApi = {
     list: (query: { status?: OrderStatus; cursor?: string; limit?: number } = {}, signal?: AbortSignal) =>
       request<Page<AdminOrderSummary>>('/v1/admin/orders', { query: { ...query }, signal }),
     get: (id: string, signal?: AbortSignal) => request<AdminOrder>(`/v1/admin/orders/${enc(id)}`, { signal }),
+    /** PAID → SHIPPED (optional courier + tracking number) */
+    ship: (id: string, body: { carrier?: string; trackingNumber?: string }) =>
+      request<AdminOrder>(`/v1/admin/orders/${enc(id)}/ship`, { method: 'POST', body }),
+    /** SHIPPED → DELIVERED */
+    deliver: (id: string) => request<AdminOrder>(`/v1/admin/orders/${enc(id)}/deliver`, { method: 'POST' }),
+    /** Before it ships; a paid order is refunded automatically. */
+    cancel: (id: string) => request<AdminOrder>(`/v1/admin/orders/${enc(id)}/cancel`, { method: 'POST' }),
   },
 };
 

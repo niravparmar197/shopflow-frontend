@@ -5,6 +5,7 @@ import { adminApi, describeError, isApiError } from '@shopflow/api';
 import { routes } from '@shopflow/shared';
 import { ErrorState, NotFound, PageHeader, Price, Spinner, StatusPill, formatDate, formatTime } from '@shopflow/ui';
 import { card, humanize, shortId, textLink } from '../format';
+import { OrderActions } from './OrderActions';
 
 /** One order: customer, status, items and totals (write model, always current). */
 export function OrderPage() {
@@ -80,6 +81,8 @@ export function OrderPage() {
             </div>
           </dl>
         </section>
+        <div className="adm:flex adm:flex-col adm:gap-6">
+        <OrderActions order={o} />
         <section className={card} aria-labelledby="customer-title">
           <h2 id="customer-title" className="adm:text-lg adm:font-semibold">
             Customer
@@ -100,7 +103,27 @@ export function OrderPage() {
               </div>
             )}
           </dl>
+          {o.shippingAddress ? (
+            <div className="adm:mt-4 adm:border-t adm:border-line adm:pt-3 adm:text-sm">
+              <p className="adm:text-muted">Deliver to</p>
+              <p className="adm:font-semibold">{o.shippingAddress.fullName}</p>
+              <p>{[o.shippingAddress.line1, o.shippingAddress.line2].filter(Boolean).join(', ')}</p>
+              <p>
+                {o.shippingAddress.city}, {o.shippingAddress.state} {o.shippingAddress.pincode}
+              </p>
+              <p className="adm:text-muted">Phone {o.shippingAddress.phone}</p>
+            </div>
+          ) : (
+            <p className="adm:mt-4 adm:border-t adm:border-line adm:pt-3 adm:text-sm adm:text-muted">No delivery address (placed before addresses existed).</p>
+          )}
+          {(o.carrier || o.trackingNumber) && (
+            <p className="adm:mt-3 adm:text-sm">
+              <span className="adm:text-muted">Shipped with</span> {o.carrier ?? '—'}
+              {o.trackingNumber && <span className="adm:font-mono"> · {o.trackingNumber}</span>}
+            </p>
+          )}
         </section>
+        </div>
       </div>
     </>
   );

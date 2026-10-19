@@ -1,10 +1,11 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Lock, Package } from 'lucide-react';
-import { cartApi, describeError, isApiError, newIdempotencyKey, ordersApi } from '@shopflow/api';
+import { cartApi, describeError, isApiError, newIdempotencyKey, ordersApi, type Address } from '@shopflow/api';
 import { emit, routes, useSession } from '@shopflow/shared';
 import { Alert, Button, Container, EmptyState, ErrorState, Price, Skeleton } from '@shopflow/ui';
+import { AddressSection } from './address/AddressSection';
 import { Steps } from './Steps';
 
 interface Problem {
@@ -78,6 +79,15 @@ export function CheckoutPage() {
   // ONE key per checkout attempt. A retry (timeout, double click, "Try again")
   // reuses it, so the order service returns the SAME order, never a second one.
   const [idempotencyKey, setIdempotencyKey] = useState(() => newIdempotencyKey());
+  const [address, setAddress] = useState<Address | null>(null);
+
+  // The address is part of the request body: a different address is a NEW
+  // attempt, so it gets a new key (the same key with another body is refused).
+  const selectAddress = useCallback((a: Address) => {
+    setAddress(a);
+    setIdempotencyKey(newIdempotencyKey());
+    setProblem(null);
+  }, []);
 
   const cart = useQuery({
     queryKey: ['checkout', 'cart', user?.id],
@@ -85,7 +95,7 @@ export function CheckoutPage() {
   });
 
   const place = useMutation({
-    mutationFn: (expectedTotalPaise: number) => ordersApi.place(idempotencyKey, expectedTotalPaise),
+    mutationFn: ({ total, to }: { total: number; to: Address }) => ordersApi.place(idempotencyKey, total, to),
     onSuccess: ({ order }) => {
       emit('cart-changed', { itemCount: 0, source: 'checkout' }); // the order service emptied the cart
       navigate(routes.pay(order.id), { replace: true });
@@ -149,7 +159,9 @@ export function CheckoutPage() {
     <Container className="chk:pb-10">
       <Steps current={1} />
       <div className="chk:grid chk:gap-6 chk:lg:grid-cols-[1fr_360px] chk:lg:items-start">
-        {/* Left: the items, read-only */}
+        {/* Left: where to deliver, then the items (read-only) */}
+        <div className="chk:flex chk:flex-col chk:gap-6">
+        <AddressSection selected={address} onSelect={selectAddress} />
         <section aria-labelledby="review-title" className="chk:rounded-card chk:border chk:border-line chk:bg-surface chk:p-5 chk:shadow-sm">
           <h1 id="review-title" className="chk:text-xl chk:font-bold chk:text-ink">
             Review your order
@@ -172,6 +184,7 @@ export function CheckoutPage() {
             Edit cart
           </Link>
         </section>
+        </div>
 
         {/* Right: summary + Place order */}
         <aside
@@ -198,6 +211,14 @@ export function CheckoutPage() {
               <dt className="chk:text-muted">Delivery</dt>
               <dd>Free</dd>
             </div>
+            {address && (
+              <div className="chk:flex chk:justify-between chk:gap-3">
+                <dt className="chk:text-muted">Deliver to</dt>
+                <dd className="chk:truncate chk:text-right">
+                  {address.fullName}, {address.city}
+                </dd>
+              </div>
+            )}
             <div className="chk:mt-2 chk:flex chk:justify-between chk:border-t chk:border-line chk:pt-3 chk:text-base">
               <dt className="chk:font-semibold chk:text-ink">Total</dt>
               <dd className="chk:font-bold chk:text-ink">
@@ -233,16 +254,17 @@ export function CheckoutPage() {
             size="lg"
             fullWidth
             loading={place.isPending}
-            disabled={blocked || waiting}
+            disabled={blocked || waiting || !address}
             onClick={() => {
+              if (!address) return;
               setProblem(null);
-              place.mutate(data.totalPaise ?? 0);
+              place.mutate({ total: data.totalPaise ?? 0, to: address });
             }}
           >
             {!place.isPending && <Lock className="chk:size-4" aria-hidden />}
             {waiting ? `Try again in ${countdown.left}s` : 'Place order'}
           </Button>
-          <p className="chk:text-center chk:text-xs chk:text-muted">You pay on the next step.</p>
+          <p className="chk:text-center chk:text-xs chk:text-muted">{address ? 'You pay on the next step.' : 'Add a delivery address to continue.'}</p>
         </aside>
       </div>
     </Container>
