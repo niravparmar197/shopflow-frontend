@@ -1,13 +1,31 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { ArrowLeft, Loader2, MapPin, SearchX, Truck } from 'lucide-react';
+import { ArrowLeft, FileText, Loader2, MapPin, SearchX, Truck } from 'lucide-react';
 import { describeError, isApiError, ordersApi, type OrderTracking } from '@shopflow/api';
-import { routes, toast, toastError } from '@shopflow/shared';
+import { routes, saveFile, toast, toastError } from '@shopflow/shared';
 import { Alert, Button, Container, EmptyState, ErrorState, Price, Skeleton, Spinner, StatusPill, formatDate, formatTime } from '@shopflow/ui';
-import { addressLines, canCancel, canPay, formatPhone, humanize, linkButton, shortId } from './format';
+import { addressLines, canCancel, canPay, formatPhone, hasInvoice, humanize, linkButton, shortId } from './format';
 
 const STOPPED = new Set(['CANCELLED', 'FAILED']);
+
+/** Downloads the GST invoice PDF (the call needs the access token, so no plain link). */
+function InvoiceButton({ orderId }: { orderId: string }) {
+  const download = useMutation({
+    mutationFn: () => ordersApi.invoice(orderId),
+    onSuccess: ({ blob, filename }) => saveFile(blob, filename ?? `invoice-${shortId(orderId)}.pdf`),
+    onError: (err) =>
+      isApiError(err) && err.code === 'INVOICE_NOT_READY'
+        ? toast({ kind: 'info', message: 'The invoice is ready once the payment is confirmed.' })
+        : toastError(err),
+  });
+  return (
+    <Button variant="secondary" loading={download.isPending} onClick={() => download.mutate()}>
+      {!download.isPending && <FileText className="chk:size-4" aria-hidden />}
+      Invoice (PDF)
+    </Button>
+  );
+}
 
 /** The red banner for a stopped order: who stopped it and what happens to the money. */
 function stoppedText(status: string, reason: string) {
@@ -168,6 +186,7 @@ export function OrderTrackingPage() {
           </p>
         </div>
         <div className="chk:flex chk:flex-wrap chk:gap-2">
+          {hasInvoice(t) && <InvoiceButton orderId={orderId} />}
           {canCancel(t.status) && !cancelled && (
             <Button variant="secondary" onClick={() => setConfirming(true)} aria-expanded={confirming} aria-controls="cancel-confirm">
               Cancel order

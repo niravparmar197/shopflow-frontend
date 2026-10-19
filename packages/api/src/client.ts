@@ -85,7 +85,8 @@ export function refreshAccessToken(): Promise<string | null> {
   return refreshing;
 }
 
-export async function requestRaw<T>(path: string, opts: RequestOptions = {}): Promise<ApiResponse<T>> {
+/** Sends the call; on an expired token, refreshes once and retries once. Throws on errors. */
+async function fetchOk(path: string, opts: RequestOptions): Promise<Response> {
   const correlationId = newId();
   let res = await send(path, opts, correlationId);
 
@@ -102,13 +103,28 @@ export async function requestRaw<T>(path: string, opts: RequestOptions = {}): Pr
   }
 
   if (!res.ok) throw await ApiError.fromResponse(res, correlationId);
+  return res;
+}
 
+export async function requestRaw<T>(path: string, opts: RequestOptions = {}): Promise<ApiResponse<T>> {
+  const res = await fetchOk(path, opts);
   const text = res.status === 204 ? '' : await res.text();
   return { data: (text ? JSON.parse(text) : undefined) as T, headers: res.headers };
 }
 
 export async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   return (await requestRaw<T>(path, opts)).data;
+}
+
+/**
+ * A file from the API (e.g. an invoice PDF). Not a plain <a href>: the call
+ * needs the access token, which lives in memory only.
+ */
+export async function requestFile(path: string): Promise<{ blob: Blob; filename: string | null }> {
+  const res = await fetchOk(path, {});
+  const disposition = res.headers.get('Content-Disposition') ?? '';
+  const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? null;
+  return { blob: await res.blob(), filename };
 }
 
 /** A fresh key per checkout attempt (8-100 letters, digits, - or _). */

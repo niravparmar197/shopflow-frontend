@@ -90,6 +90,17 @@ export function SignupPage() {
         <Button type="submit" size="lg" fullWidth loading={busy}>
           Create account
         </Button>
+        <p className="text-center text-xs text-muted">
+          By creating an account you agree to our{' '}
+          <Link to={routes.terms} className="font-semibold text-primary hover:underline">
+            Terms
+          </Link>{' '}
+          and{' '}
+          <Link to={routes.privacy} className="font-semibold text-primary hover:underline">
+            Privacy policy
+          </Link>
+          .
+        </p>
       </form>
     </AuthCard>
   );
