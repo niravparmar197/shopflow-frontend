@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router';
 import { Footer } from './Footer';
 import { Header } from './Header';
 import { Toaster } from './Toaster';
+import { VerifyBanner } from './VerifyBanner';
 
 /** The tab title for each top-level page (the shell owns the routes). */
 function titleFor(pathname: string): string {
@@ -17,6 +18,10 @@ function titleFor(pathname: string): string {
   if (pathname.startsWith('/orders')) return 'My orders';
   if (pathname === '/login') return 'Log in';
   if (pathname === '/signup') return 'Sign up';
+  if (pathname === '/account') return 'My account';
+  if (pathname === '/forgot-password') return 'Forgot password';
+  if (pathname === '/reset-password') return 'New password';
+  if (pathname === '/verify-email') return 'Confirm email';
   return 'Page not found';
 }
 
@@ -52,6 +57,7 @@ export function Layout() {
         Skip to content
       </a>
       <Header />
+      <VerifyBanner />
       <main id="main" ref={main} tabIndex={-1} className="flex-1 outline-none">
         <Outlet />
       </main>

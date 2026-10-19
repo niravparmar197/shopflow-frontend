@@ -41,6 +41,13 @@ export const session = {
     emit();
   },
 
+  /** A newer copy of the logged-in user (profile edit, email verified). */
+  updateUser(user: User) {
+    if (state.status !== 'authenticated' || state.user?.id !== user.id) return;
+    state = { status: 'authenticated', user };
+    emit();
+  },
+
   setAnonymous() {
     accessToken = null;
     if (state.status === 'anonymous' && state.user === null) return;

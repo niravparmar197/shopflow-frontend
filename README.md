@@ -4,7 +4,7 @@ The web shop for the **[ShopFlow microservices](https://github.com/niravparmar19
 
 **Stack:** React 19 · TypeScript (strict) · Vite 8 · Module Federation 2 (`@module-federation/vite`) · React Router 7 · TanStack Query 5 · Tailwind CSS 4 · Vitest · Playwright
 
-> **Status:** F0–F8 done; Phase 2 P1 (admin panel) and P2 (address, cancel, ship / deliver) built. **Live on AWS** (Stage 1): https://shopflow-nirav.duckdns.org (when the Stage 1 box is running). Sign up → browse → cart → place order → pay → track.
+> **Status:** F0–F8 done; Phase 2 P1 (admin panel), P2 (address, cancel, ship / deliver) and P3 (account) built. **Live on AWS** (Stage 1): https://shopflow-nirav.duckdns.org (when the Stage 1 box is running). Sign up → browse → cart → place order → pay → track.
 
 ```mermaid
 flowchart LR
@@ -153,6 +153,9 @@ On a 401, the client refreshes once (single flight: 10 parallel 401s → 1 refre
 | Route | App | Gateway calls |
 |---|---|---|
 | `/login`, `/signup` | shell | `POST /v1/auth/login`, `/signup`, `/refresh`, `/logout`, `GET /v1/users/me` |
+| `/forgot-password`, `/reset-password#token=…` | shell | `POST /v1/auth/forgot-password`, `/reset-password` (the token sits after `#`, so it never reaches a server log; the page then removes it from the address bar) |
+| `/verify-email#token=…` | shell | `POST /v1/auth/verify-email` (sent once, even when React runs the effect twice) |
+| `/account` | shell | `PATCH /v1/users/me` (name, phone), `POST /v1/auth/change-password`, `POST /v1/users/me/verify-email` |
 | `/`, `/products` | catalog | `GET /v1/products?q&category&minPrice&maxPrice&cursor&limit` |
 | `/products/:slug` | catalog | `GET /v1/products/:idOrSlug`, `POST /v1/cart/items` |
 | `/cart` + header badge | cart | `GET /v1/cart`, `PATCH`/`DELETE /v1/cart/items/:id`, `POST`/`DELETE /v1/cart/coupon` |
@@ -256,7 +259,7 @@ CI (`.github/workflows/ci.yml`) runs on every PR: typecheck, lint, unit tests, b
 
 - [x] **P1** Admin panel: the `admin` remote at `/admin/*` (admin role only; customers see "No access"): products with live stock, create / edit (optimistic `version`), image upload, stock, flash sales, coupons, all orders with a status filter
 - [x] **P2** Checkout complete: address book + delivery address at checkout, cancel before shipping (refund + stock back), admin ship (courier, tracking) / deliver, tracking shows Shipped / Delivered
-- [ ] **P3** Account: reset password, verify email, profile
+- [x] **P3** Account: forgot / reset password by email link, email confirmation (soft: a banner + "send it again"), account page (name, phone, change password)
 - [ ] **P4** Email and legal: SES emails, legal pages, invoice PDF
 - [ ] **P5** Shop polish: images in the shop, categories API, sorting, flash sale page, wishlist, reviews
 

@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Eye, EyeOff, ShoppingBag } from 'lucide-react';
 import { Card } from '@shopflow/ui';
 
-export function AuthCard({ title, subtitle, children, footer }: { title: string; subtitle: string; children: ReactNode; footer: ReactNode }) {
+export function AuthCard({ title, subtitle, children, footer }: { title: string; subtitle: string; children: ReactNode; footer?: ReactNode }) {
   return (
     <div className="flex justify-center px-4 py-10 sm:py-16">
       <Card className="w-full max-w-[420px] p-6 sm:p-8">
@@ -14,7 +14,7 @@ export function AuthCard({ title, subtitle, children, footer }: { title: string;
           <p className="mt-1.5 text-sm text-muted">{subtitle}</p>
         </div>
         {children}
-        <p className="mt-6 text-center text-sm text-muted">{footer}</p>
+        {footer && <p className="mt-6 text-center text-sm text-muted">{footer}</p>}
       </Card>
     </div>
   );

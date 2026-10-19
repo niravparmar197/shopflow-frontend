@@ -65,6 +65,9 @@ export function LoginPage() {
           onChange={(e) => setPass(e.target.value)}
           trailing={password.toggle}
         />
+        <Link to={routes.forgotPassword} className="-mt-2 self-end text-sm font-semibold text-primary hover:underline">
+          Forgot password?
+        </Link>
         <Button type="submit" size="lg" fullWidth loading={busy} disabled={!email || !pass}>
           Log in
         </Button>

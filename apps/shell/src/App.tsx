@@ -5,9 +5,13 @@ import { isApiError, restoreSession } from '@shopflow/api';
 import { RemoteComponent } from './federation/RemoteComponent';
 import { initRemotes } from './federation/remotes';
 import { Layout } from './layout/Layout';
+import { AccountPage } from './pages/AccountPage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { SignupPage } from './pages/SignupPage';
+import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { RequireAuth } from './pages/RequireAuth';
 
 /*
@@ -83,6 +87,17 @@ export function App() {
             {/* shell's own pages */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route
+              path="/account"
+              element={
+                <RequireAuth>
+                  <AccountPage />
+                </RequireAuth>
+              }
+            />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

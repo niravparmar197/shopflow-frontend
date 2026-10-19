@@ -10,6 +10,10 @@ export interface User {
   role: Role;
   isActive: boolean;
   createdAt: string;
+  /** 10-digit mobile, set on the account page (Phase 2 P3) */
+  phone: string | null;
+  /** null until the user opens the link from the signup email */
+  emailVerifiedAt: string | null;
 }
 
 export interface AccessToken {
